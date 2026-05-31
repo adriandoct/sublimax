@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Outfit', 'Inter', system-ui, sans-serif;
+    background-color: #05060e;
+    color: #f3f4f6;
+  }
+  
+  body {
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    background-color: #05060e;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b0c1e;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #6366f1;
+  }
+}
+
+/* Custom premium styles */
+.glass-panel {
+  background: rgba(13, 14, 37, 0.65);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-glow {
+  background: rgba(13, 14, 37, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);
+}
+
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.mesh-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* Keyframes for Sublimation Machine Sim */
+@keyframes heatPressDown {
+  0% { transform: translateY(-40px) rotateX(20deg); }
+  40% { transform: translateY(0) rotateX(0); }
+  60% { transform: translateY(0) rotateX(0); }
+  100% { transform: translateY(-40px) rotateX(20deg); }
+}
+
+@keyframes steamRise {
+  0% { transform: translateY(20px) scale(0.6); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(-80px) scale(1.5); opacity: 0; }
+}
+
+@keyframes revealDesign {
+  0% { filter: grayscale(1) brightness(0.2); }
+  50% { filter: grayscale(0.5) brightness(1.5); }
+  100% { filter: none; }
+}
+
+.animate-heat-press {
+  animation: heatPressDown 4s infinite ease-in-out;
+}
+
+.animate-steam {
+  animation: steamRise 2s infinite linear;
+}
+
+.animate-reveal-design {
+  animation: revealDesign 4s infinite ease-in-out;
+}
+
+/* ThreeJS Container Styling */
+.three-canvas-container canvas {
+  outline: none;
+}
+
+/* Neon buttons */
+.btn-glow-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.btn-glow-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s;
+}
+.btn-glow-primary:hover::after {
+  left: 125%;
+}

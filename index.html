@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/src/assets/react.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUBLIMAX Studio | Personaliza tu imaginación</title>
+    <meta name="description" content="SUBLIMAX Studio - La plataforma premium de sublimación digital. Diseña tazas, playeras, gorras y termos en 3D en tiempo real con ayuda de Inteligencia Artificial." />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Montserrat:ital,wght@0,100..0,900;1,100..0,900&family=Outfit:wght@100..900&family=Pacifico&display=swap" rel="stylesheet">
+    
+    <style>
+      /* CSS utility for 3D flip card perspectives */
+      .perspective {
+        perspective: 1000px;
+      }
+      .preserve-3d {
+        transform-style: preserve-3d;
+      }
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+    </style>
+  </head>
+  <body class="bg-[#05060e] text-[#f3f4f6]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
