@@ -173,7 +173,7 @@ export default function App() {
             Catálogo
           </button>
           
-          {selectedProducto && (
+          {selectedProducto && currentUser?.role === 'admin' && (
             <button 
               onClick={() => setActiveTab('designer')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
@@ -491,23 +491,35 @@ export default function App() {
                         <span className="text-base font-extrabold text-white">${prod.precio_base.toFixed(2)}</span>
                       </div>
                       
-                      <button
-                        onClick={() => {
-                          handleAddToCart({
-                            id: `cart-${Date.now()}-${prod.id}`,
-                            producto_id: prod.id,
-                            producto_nombre: prod.nombre,
-                            producto_imagen: prod.imagen_url,
-                            tipo_3d: prod.tipo_3d,
-                            precio_unitario: prod.precio_base,
-                            cantidad: 1,
-                            color: '#ffffff'
-                          });
-                        }}
-                        className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-950/50"
-                      >
-                        Agregar al Carrito
-                      </button>
+                      {currentUser?.role === 'admin' ? (
+                        <button
+                          onClick={() => {
+                            setSelectedProducto(prod);
+                            setActiveTab('designer');
+                          }}
+                          className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-950/50"
+                        >
+                          Personalizar 3D
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            handleAddToCart({
+                              id: `cart-${Date.now()}-${prod.id}`,
+                              producto_id: prod.id,
+                              producto_nombre: prod.nombre,
+                              producto_imagen: prod.imagen_url,
+                              tipo_3d: prod.tipo_3d,
+                              precio_unitario: prod.precio_base,
+                              cantidad: 1,
+                              color: '#ffffff'
+                            });
+                          }}
+                          className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-950/50"
+                        >
+                          Agregar al Carrito
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -522,7 +534,7 @@ export default function App() {
         )}
 
         {/* TAB 2: INTERACTIVE 3D DESIGNER & AI STUDIO */}
-        {activeTab === 'designer' && selectedProducto && (
+        {activeTab === 'designer' && selectedProducto && currentUser?.role === 'admin' && (
           <div className="flex flex-col gap-8">
             {/* Editor Top Navigation */}
             <div className="flex justify-between items-center border-b border-slate-900 pb-4">
