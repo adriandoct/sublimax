@@ -318,21 +318,20 @@ export default function App() {
                 Imprime tu Imaginación en <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400">Tazas, Playeras y Más</span>
               </h2>
               <p className="text-slate-400 text-sm leading-relaxed max-w-lg">
-                Diseña en 3D en tiempo real, genera tus propios artes conceptuales con Inteligencia Artificial, visualiza los productos en tu habitación con AR y recibe impresiones de sublimación ultra vibrantes.
+                Genera tus propios artes conceptuales con Inteligencia Artificial, explora nuestro amplio catálogo y recibe impresiones de sublimación ultra vibrantes.
               </p>
               
               <div className="flex gap-4 mt-2">
                 <button 
                   onClick={() => {
-                    const tazasProd = products.find(p => p.id === 'prod-taza-1');
-                    if (tazasProd) {
-                      setSelectedProducto(tazasProd);
-                      setActiveTab('designer');
+                    const catalogEl = document.getElementById('catalog-section');
+                    if (catalogEl) {
+                      catalogEl.scrollIntoView({ behavior: 'smooth' });
                     }
                   }}
                   className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl text-xs transition shadow-lg shadow-indigo-950/40"
                 >
-                  Probar Diseñador 3D
+                  Explorar Catálogo
                 </button>
                 <button 
                   onClick={() => setActiveTab('b2b')}
@@ -378,7 +377,7 @@ export default function App() {
 
         {/* TAB 1: CATALOG GRID */}
         {activeTab === 'catalog' && !selectedProducto && (
-          <div className="flex flex-col gap-8">
+          <div id="catalog-section" className="flex flex-col gap-8">
             
             {/* Categories & Filter Bar */}
             <div className="flex flex-col gap-5 bg-slate-950/40 p-5 rounded-3xl border border-slate-900">
@@ -494,12 +493,20 @@ export default function App() {
                       
                       <button
                         onClick={() => {
-                          setSelectedProducto(prod);
-                          setActiveTab('designer');
+                          handleAddToCart({
+                            id: `cart-${Date.now()}-${prod.id}`,
+                            producto_id: prod.id,
+                            producto_nombre: prod.nombre,
+                            producto_imagen: prod.imagen_url,
+                            tipo_3d: prod.tipo_3d,
+                            precio_unitario: prod.precio_base,
+                            cantidad: 1,
+                            color: '#ffffff'
+                          });
                         }}
                         className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-950/50"
                       >
-                        Personalizar 3D
+                        Agregar al Carrito
                       </button>
                     </div>
                   </div>
