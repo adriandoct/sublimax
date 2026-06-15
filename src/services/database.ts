@@ -191,6 +191,48 @@ const DEFAULT_PRODUCTS: Producto[] = [
     material: 'Poliéster 100% (190 gr/m²)'
   },
   {
+    id: 'prod-playera-clown-color',
+    nombre: 'Playera Clown Colorida Sublimada',
+    descripcion: 'Playera premium sublimada con el diseño vibrante de una máscara punk de payaso.',
+    precio_base: 250.00,
+    categoria_id: 'cat-2',
+    imagen_url: '/playera_clown_color.png',
+    stock: 100,
+    tipo_3d: 'playera',
+    popularidad: 5,
+    fecha_creacion: '2026-06-14',
+    dimensiones: 'S, M, L, XL',
+    material: 'Poliéster 100% (Tacto Algodón)'
+  },
+  {
+    id: 'prod-playera-clown-sequin',
+    nombre: 'Playera Clown Brillante Sublimada',
+    descripcion: 'Playera premium sublimada con el diseño detallado de diamantes y lentejuelas de máscara clown.',
+    precio_base: 250.00,
+    categoria_id: 'cat-2',
+    imagen_url: '/playera_clown_sequin.png',
+    stock: 100,
+    tipo_3d: 'playera',
+    popularidad: 5,
+    fecha_creacion: '2026-06-14',
+    dimensiones: 'S, M, L, XL',
+    material: 'Poliéster 100% (Tacto Algodón)'
+  },
+  {
+    id: 'prod-playera-lucha-azul',
+    nombre: 'Playera Lucha Libre Azul Sublimada',
+    descripcion: 'Playera premium sublimada con diseño bordado estilizado de máscara de lucha libre azul.',
+    precio_base: 250.00,
+    categoria_id: 'cat-2',
+    imagen_url: '/playera_lucha_azul.png',
+    stock: 100,
+    tipo_3d: 'playera',
+    popularidad: 5,
+    fecha_creacion: '2026-06-14',
+    dimensiones: 'S, M, L, XL',
+    material: 'Poliéster 100% (Tacto Algodón)'
+  },
+  {
     id: 'prod-gorra-trucker',
     nombre: 'Gorra Trucker Ajustable',
     descripcion: 'Gorra clásica tipo trailera con malla de nylon trasera y frente acolchado sublimable.',
@@ -231,7 +273,21 @@ export class Database {
   private static initKey = 'sublimax_db_initialized';
 
   static initialize() {
-    if (localStorage.getItem(this.initKey)) return;
+    if (localStorage.getItem(this.initKey)) {
+      // Ensure any new default products are added even if already initialized
+      const currentProds = JSON.parse(localStorage.getItem('sublimax_productos') || '[]');
+      let updated = false;
+      DEFAULT_PRODUCTS.forEach(dp => {
+        if (!currentProds.some((p: Producto) => p.id === dp.id)) {
+          currentProds.push(dp);
+          updated = true;
+        }
+      });
+      if (updated) {
+        localStorage.setItem('sublimax_productos', JSON.stringify(currentProds));
+      }
+      return;
+    }
 
     localStorage.setItem('sublimax_categorias', JSON.stringify(DEFAULT_CATEGORIES));
     localStorage.setItem('sublimax_productos', JSON.stringify(DEFAULT_PRODUCTS));
