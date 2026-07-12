@@ -754,6 +754,31 @@ export class Database {
     }
   }
 
+  static rejectDesign(designId: string) {
+    const designs = this.getDesigns();
+    const filtered = designs.filter(d => d.id !== designId);
+    localStorage.setItem('sublimax_diseños', JSON.stringify(filtered));
+
+    if (supabaseClient && !designId.includes('des-')) {
+      supabaseClient.from('diseños')
+        .delete()
+        .eq('id', designId)
+        .then(({ error }) => { if (error) console.error("Error rejecting design in Supabase:", error); });
+    }
+  }
+
+  static getAllDesignersWithDesigns(): { usuario: Usuario; designs: Diseño[] }[] {
+    this.initialize();
+    const users: Usuario[] = JSON.parse(localStorage.getItem('sublimax_usuarios') || '[]');
+    const allDesigns: Diseño[] = JSON.parse(localStorage.getItem('sublimax_diseños') || '[]');
+    const designers = users.filter(u => u.role === 'designer' || u.role === 'admin');
+    return designers.map(u => ({
+      usuario: u,
+      designs: allDesigns.filter(d => d.usuario_id === u.id),
+    }));
+  }
+
+
   // --- Reviews API ---
   static getReviews(productoId: string): Reseña[] {
     this.initialize();

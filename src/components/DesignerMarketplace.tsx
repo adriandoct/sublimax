@@ -3,7 +3,8 @@ import { Database, Diseño, Usuario } from '../services/database';
 import {
   Sparkles, Upload, Check, Loader, Award, X,
   Eye, Palette, ImagePlus, UserPlus, LogIn, ShieldCheck,
-  TrendingUp, DollarSign, Package
+  TrendingUp, DollarSign, Package, ClipboardList, CheckCircle2,
+  XCircle, Clock, Users, AlertCircle, Bell
 } from 'lucide-react';
 
 interface DesignerMarketplaceProps {
@@ -304,11 +305,16 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   const [imageFileName, setImageFileName] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState('');
   const [showRegister, setShowRegister] = useState(false);
-  const [activeView, setActiveView] = useState<'upload' | 'portfolio'>('upload');
+  const [activeView, setActiveView] = useState<'upload' | 'portfolio' | 'revision'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Admin moderation state
+  const [designersData, setDesignersData] = useState<{ usuario: Usuario; designs: Diseño[] }[]>([]);
+  const [actionMsg, setActionMsg] = useState<{ text: string; type: 'ok' | 'err' } | null>(null);
 
   const isDesignerOrAdmin =
     currentUser?.role === 'designer' || currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin';
 
   const loadDesigns = () => {
     if (!currentUser) return;
@@ -316,8 +322,16 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     setDesigns(allDesigns.filter(d => d.usuario_id === currentUser.id));
   };
 
+  const loadAdminData = () => {
+    setDesignersData(Database.getAllDesignersWithDesigns());
+  };
+
   useEffect(() => {
     loadDesigns();
+    if (isAdmin) {
+      loadAdminData();
+      setActiveView('revision'); // Admin sees moderation panel first
+    }
   }, [currentUser]);
 
   /* ── File picker handler ── */
@@ -614,7 +628,29 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900 self-start">
+      <div className="flex gap-2 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-900 self-start flex-wrap">
+        {/* Admin sees revision tab first */}
+        {isAdmin && (
+          <button
+            id="tab-revision"
+            onClick={() => { setActiveView('revision'); loadAdminData(); }}
+            className={`px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+              activeView === 'revision'
+                ? 'bg-amber-600/30 border border-amber-500/40 text-amber-200'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            Revisión de Diseños
+            {/* Pending badge */}
+            {(() => {
+              const pending = designersData.flatMap(d => d.designs).filter(d => !d.aprobado).length;
+              return pending > 0 ? (
+                <span className="ml-1 bg-amber-500 text-black text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">{pending}</span>
+              ) : null;
+            })()}
+          </button>
+        )}
         <button
           id="tab-upload"
           onClick={() => setActiveView('upload')}
@@ -813,28 +849,33 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
               {designs.map(des => (
                 <div
                   key={des.id}
-                  className="bg-slate-950/50 border border-slate-850 rounded-2xl overflow-hidden flex flex-col group hover:border-indigo-500/30 transition"
+                  className={`bg-slate-950/50 border rounded-2xl overflow-hidden flex flex-col group transition ${
+                    des.aprobado
+                      ? 'border-emerald-800/40 hover:border-emerald-500/40'
+                      : 'border-amber-800/30 hover:border-amber-500/30'
+                  }`}
                 >
-                  {/* Thumbnail — shirt preview */}
+                  {/* Status banner */}
+                  {des.aprobado ? (
+                    <div className="flex items-center gap-2 bg-emerald-950/70 border-b border-emerald-900/50 px-4 py-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                      <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">✓ Aprobado — Activo en el Marketplace</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 bg-amber-950/50 border-b border-amber-900/40 px-4 py-2">
+                      <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                      <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider">Pendiente de revisión por el Admin</span>
+                    </div>
+                  )}
+
+                  {/* Thumbnail */}
                   <div className="relative bg-slate-900/40 p-4 flex items-center justify-center min-h-[160px]">
                     <ShirtPreview imageDataUrl={des.imagen_url} title="" />
-                    {/* Status badge */}
-                    <span
-                      className={`absolute top-2 right-2 text-[9px] font-bold px-2.5 py-1 rounded-full ${
-                        des.aprobado
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-900'
-                          : 'bg-amber-950 text-amber-400 border border-amber-900'
-                      }`}
-                    >
-                      {des.aprobado ? '✓ Activo' : '⏰ Pendiente'}
-                    </span>
                   </div>
 
                   {/* Info */}
                   <div className="p-4 flex flex-col gap-1 flex-1">
-                    <span className="font-bold text-sm text-white leading-snug truncate">
-                      {des.titulo}
-                    </span>
+                    <span className="font-bold text-sm text-white leading-snug truncate">{des.titulo}</span>
                     <div className="flex items-center justify-between mt-auto pt-2">
                       <span className="text-[10px] text-slate-500">
                         Vendido: <span className="text-slate-300 font-bold">{des.ventas}x</span>
@@ -852,13 +893,205 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
             <div className="text-center py-20 text-slate-600 text-sm">
               <Package className="w-12 h-12 mx-auto mb-3 text-slate-800" />
               Aún no has subido ningún diseño.{' '}
-              <button
-                onClick={() => setActiveView('upload')}
-                className="text-indigo-400 underline hover:text-indigo-300"
-              >
+              <button onClick={() => setActiveView('upload')} className="text-indigo-400 underline hover:text-indigo-300">
                 Sube tu primera propuesta
               </button>
               .
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ADMIN REVISION VIEW ── */}
+      {activeView === 'revision' && isAdmin && (
+        <div className="flex flex-col gap-6">
+
+          {/* Action feedback */}
+          {actionMsg && (
+            <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm animate-fade-in border ${
+              actionMsg.type === 'ok'
+                ? 'bg-emerald-950/60 border-emerald-800/50 text-emerald-400'
+                : 'bg-red-950/60 border-red-800/50 text-red-400'
+            }`}>
+              {actionMsg.type === 'ok' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+              {actionMsg.text}
+            </div>
+          )}
+
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20">
+                <ClipboardList className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-white">Panel de Moderación</h2>
+                <p className="text-xs text-slate-500">Revisa, aprueba o rechaza los diseños de los creadores.</p>
+              </div>
+            </div>
+            <button
+              onClick={loadAdminData}
+              className="text-xs text-slate-400 hover:text-white border border-slate-800 hover:border-slate-600 px-4 py-2 rounded-xl transition flex items-center gap-1.5"
+            >
+              <Bell className="w-3.5 h-3.5" /> Actualizar
+            </button>
+          </div>
+
+          {/* Summary stats */}
+          <div className="grid grid-cols-3 gap-4">
+            {(() => {
+              const allD = designersData.flatMap(d => d.designs);
+              return [
+                { label: 'Diseñadores', value: designersData.length, icon: <Users className="w-4 h-4 text-indigo-400" />, color: 'text-indigo-300' },
+                { label: 'Pendientes', value: allD.filter(d => !d.aprobado).length, icon: <Clock className="w-4 h-4 text-amber-400" />, color: 'text-amber-300' },
+                { label: 'Aprobados', value: allD.filter(d => d.aprobado).length, icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />, color: 'text-emerald-300' },
+              ].map(s => (
+                <div key={s.label} className="glass-panel rounded-2xl p-4 border-slate-800 flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">{s.label}</span>
+                    {s.icon}
+                  </div>
+                  <span className={`text-2xl font-extrabold ${s.color}`}>{s.value}</span>
+                </div>
+              ));
+            })()}
+          </div>
+
+          {/* Designer cards */}
+          {designersData.length === 0 ? (
+            <div className="glass-panel rounded-3xl p-12 border-slate-800 text-center text-slate-600 text-sm flex flex-col items-center gap-3">
+              <Users className="w-12 h-12 text-slate-800" />
+              <p>No hay diseñadores registrados todavía.</p>
+              <p className="text-xs text-slate-700">Los diseñadores aparecerán aquí cuando se registren y suban diseños.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {designersData.map(({ usuario, designs: dList }) => (
+                <div key={usuario.id} className="glass-panel rounded-3xl p-6 border-slate-800">
+
+                  {/* Designer header */}
+                  <div className="flex items-center gap-4 mb-5 pb-4 border-b border-slate-900">
+                    <img
+                      src={usuario.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(usuario.email)}`}
+                      alt={usuario.nombre}
+                      className="w-12 h-12 rounded-full border-2 border-indigo-500/30 bg-slate-900"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-white text-sm">{usuario.nombre}</span>
+                        <span className="text-[9px] bg-indigo-950 text-indigo-300 border border-indigo-800/50 px-2 py-0.5 rounded-full font-bold uppercase">
+                          {usuario.role}
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-500 block truncate">{usuario.email}</span>
+                      <span className="text-[10px] text-slate-600">Registrado: {usuario.fecha_registro}</span>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-lg font-extrabold text-white">{dList.length}</span>
+                      <span className="text-[10px] text-slate-500 block">diseños</span>
+                    </div>
+                  </div>
+
+                  {/* Designs grid */}
+                  {dList.length === 0 ? (
+                    <div className="text-center py-8 text-slate-600 text-xs flex flex-col items-center gap-2">
+                      <AlertCircle className="w-8 h-8 text-slate-800" />
+                      Este diseñador aún no ha subido diseños.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {dList.map(des => (
+                        <div
+                          key={des.id}
+                          className={`rounded-2xl border overflow-hidden flex flex-col transition ${
+                            des.aprobado
+                              ? 'border-emerald-800/40 bg-emerald-950/10'
+                              : 'border-amber-800/40 bg-amber-950/10'
+                          }`}
+                        >
+                          {/* Status strip */}
+                          <div className={`flex items-center gap-1.5 px-3 py-1.5 ${
+                            des.aprobado ? 'bg-emerald-900/30' : 'bg-amber-900/20'
+                          }`}>
+                            {des.aprobado
+                              ? <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              : <Clock className="w-3 h-3 text-amber-400" />}
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                              des.aprobado ? 'text-emerald-400' : 'text-amber-400'
+                            }`}>
+                              {des.aprobado ? 'Aprobado' : 'Pendiente de revisión'}
+                            </span>
+                          </div>
+
+                          {/* Shirt thumbnail */}
+                          <div className="bg-slate-900/40 p-3 flex items-center justify-center min-h-[140px]">
+                            <ShirtPreview imageDataUrl={des.imagen_url} title="" />
+                          </div>
+
+                          {/* Info */}
+                          <div className="p-3 flex flex-col gap-2">
+                            <span className="font-bold text-xs text-white truncate">{des.titulo}</span>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-slate-400">Precio: <strong className="text-white">${des.precio} MXN</strong></span>
+                              <span className="text-[10px] text-slate-400">{des.ventas} ventas</span>
+                            </div>
+
+                            {/* Action buttons */}
+                            {!des.aprobado ? (
+                              <div className="flex gap-2 mt-1">
+                                <button
+                                  onClick={() => {
+                                    Database.approveDesign(des.id);
+                                    loadAdminData();
+                                    loadDesigns();
+                                    setActionMsg({ text: `✓ "${des.titulo}" aprobado. El diseñador fue notificado.`, type: 'ok' });
+                                    setTimeout(() => setActionMsg(null), 4000);
+                                  }}
+                                  className="flex-1 py-2 bg-emerald-700/40 hover:bg-emerald-600/60 border border-emerald-700/50 text-emerald-300 text-[10px] font-bold rounded-xl transition flex items-center justify-center gap-1"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Aprobar
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (!confirm(`¿Rechazar y eliminar "${des.titulo}"? Esta acción no se puede deshacer.`)) return;
+                                    Database.rejectDesign(des.id);
+                                    loadAdminData();
+                                    loadDesigns();
+                                    setActionMsg({ text: `✗ "${des.titulo}" rechazado y eliminado.`, type: 'err' });
+                                    setTimeout(() => setActionMsg(null), 4000);
+                                  }}
+                                  className="flex-1 py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-400 text-[10px] font-bold rounded-xl transition flex items-center justify-center gap-1"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" /> Rechazar
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2 mt-1">
+                                <div className="flex-1 py-2 bg-emerald-950/30 border border-emerald-900/30 text-emerald-500 text-[10px] font-bold rounded-xl flex items-center justify-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Publicado en Marketplace
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    if (!confirm(`¿Retirar "${des.titulo}" del marketplace?`)) return;
+                                    Database.rejectDesign(des.id);
+                                    loadAdminData();
+                                    loadDesigns();
+                                    setActionMsg({ text: `"${des.titulo}" retirado del marketplace.`, type: 'err' });
+                                    setTimeout(() => setActionMsg(null), 4000);
+                                  }}
+                                  className="px-3 py-2 bg-red-950/30 hover:bg-red-900/50 border border-red-900/40 text-red-500 text-[10px] font-bold rounded-xl transition"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
