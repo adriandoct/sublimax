@@ -73,7 +73,7 @@ export default function App() {
   };
 
   const autoLoginAdmin = () => {
-    const user = Database.login('admin@gmail.com', '12345678Cecyte');
+    const user = Database.login('admin@admin.com', '12345678Cecyte');
     if (user) {
       setCurrentUser(user);
       setActiveTab('admin');
@@ -264,7 +264,7 @@ export default function App() {
                 <input
                   type="email"
                   required
-                  placeholder="admin@gmail.com"
+                  placeholder="admin@admin.com"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="bg-slate-950 border border-slate-900 rounded-xl px-2.5 py-1.5 text-[10px] text-white focus:outline-none w-28"

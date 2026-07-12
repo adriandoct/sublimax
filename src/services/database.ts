@@ -305,8 +305,8 @@ export class Database {
     // Admin profile seed
     const adminUser: Usuario = {
       id: 'admin-id-1',
-      email: 'admin@gmail.com',
-      nombre: 'Administrador General (Cecyte)',
+      email: 'admin@admin.com',
+      nombre: 'Administrador General',
       role: 'admin',
       fecha_registro: '2026-05-01',
       avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin'
@@ -327,12 +327,12 @@ export class Database {
   static login(email: string, pass: string): Usuario | null {
     this.initialize();
     
-    // Auth bypass simulator or Supabase Auth link
-    if (email.toLowerCase() === 'admin@gmail.com' && pass === '12345678Cecyte') {
+    // Auth bypass — modo sandbox local (sin Supabase configurado)
+    if (email.toLowerCase() === 'admin@admin.com' && pass === '12345678Cecyte') {
       const admin: Usuario = {
         id: 'admin-id-1',
-        email: 'admin@gmail.com',
-        nombre: 'Administrador General (Cecyte)',
+        email: 'admin@admin.com',
+        nombre: 'Administrador General',
         role: 'admin',
         fecha_registro: '2026-05-01',
         avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin'
