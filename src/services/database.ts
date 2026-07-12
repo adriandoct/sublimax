@@ -362,6 +362,39 @@ export class Database {
     localStorage.setItem('sublimax_active_user', JSON.stringify(null));
   }
 
+  /**
+   * Register a brand new user (designer or user role).
+   * Returns the created Usuario on success, or an error string on failure.
+   */
+  static register(
+    nombre: string,
+    email: string,
+    _password: string,
+    role: 'user' | 'designer' = 'user'
+  ): Usuario | string {
+    this.initialize();
+    const users = this.getUsers();
+    const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+      return 'Ya existe una cuenta con ese correo electrónico.';
+    }
+
+    const newUser: Usuario = {
+      id: `user-${Date.now()}`,
+      email,
+      nombre: nombre.trim() || email.split('@')[0].toUpperCase(),
+      role,
+      fecha_registro: new Date().toISOString().split('T')[0],
+      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
+      comision_acumulada: role === 'designer' ? 0 : undefined,
+    };
+
+    users.push(newUser);
+    localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
+    localStorage.setItem('sublimax_active_user', JSON.stringify(newUser));
+    return newUser;
+  }
+
   static getUsers(): Usuario[] {
     this.initialize();
     return JSON.parse(localStorage.getItem('sublimax_usuarios') || '[]');
