@@ -117,11 +117,15 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Check if credentials are valid and not placeholders
-const isSupabaseConfigured = 
-  supabaseUrl && 
-  supabaseAnonKey && 
+// Accepts both legacy JWT (eyJ...) and new sb_publishable_ key formats
+const isSupabaseConfigured =
+  supabaseUrl &&
+  supabaseAnonKey &&
   supabaseUrl !== 'https://tu-proyecto.supabase.co' &&
-  !supabaseUrl.includes('placeholder');
+  !supabaseUrl.includes('placeholder') &&
+  !supabaseAnonKey.includes('PEGA_AQUI') &&
+  !supabaseAnonKey.includes('tu-anon-key') &&
+  (supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.startsWith('sb_publishable_'));
 
 export let supabaseClient: SupabaseClient | null = null;
 
