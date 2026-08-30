@@ -258,6 +258,70 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
       const shirt = new THREE.Mesh(geometry, materials);
       group.add(shirt);
 
+    } else if (producto.tipo_3d === 'vaso') {
+      // Clear Glass Tumbler Can (Vaso de Vidrio con Tapa de Bambú y Sorbete de Cristal)
+      // 1. Transparent Glass Body with Sublimation Print
+      const glassMat = new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.88,
+        roughness: 0.1,
+        metalness: 0.05,
+        side: THREE.DoubleSide
+      });
+      geometry = new THREE.CylinderGeometry(1.0, 1.0, 2.7, 32, 1, true);
+      const glassBody = new THREE.Mesh(geometry, glassMat);
+      group.add(glassBody);
+
+      // 2. Glass Base & Top Rim (thick glass effect)
+      const glassRimMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.45,
+        roughness: 0.05
+      });
+
+      const bottomGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.08, 32);
+      const bottomGlass = new THREE.Mesh(bottomGeo, glassRimMat);
+      bottomGlass.position.y = -1.35;
+      group.add(bottomGlass);
+
+      const topRimGeo = new THREE.TorusGeometry(1.0, 0.04, 16, 32);
+      const topRim = new THREE.Mesh(topRimGeo, glassRimMat);
+      topRim.position.y = 1.35;
+      topRim.rotation.x = Math.PI / 2;
+      group.add(topRim);
+
+      // 3. Wooden Bamboo Lid
+      const bambooMat = new THREE.MeshStandardMaterial({
+        color: 0xd4a373, // Warm bamboo wood tone
+        roughness: 0.4,
+        metalness: 0.05
+      });
+      const lidCapGeo = new THREE.CylinderGeometry(1.06, 1.06, 0.22, 32);
+      const lidCap = new THREE.Mesh(lidCapGeo, bambooMat);
+      lidCap.position.y = 1.46;
+      group.add(lidCap);
+
+      // Inner silicone ring
+      const gasketGeo = new THREE.CylinderGeometry(0.98, 0.98, 0.08, 32);
+      const gasket = new THREE.Mesh(gasketGeo, new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.7 }));
+      gasket.position.y = 1.32;
+      group.add(gasket);
+
+      // 4. Glass Straw (Sorbete de Vidrio)
+      const strawMat = new THREE.MeshStandardMaterial({
+        color: 0xf8fafc,
+        transparent: true,
+        opacity: 0.7,
+        roughness: 0.05
+      });
+      const strawGeo = new THREE.CylinderGeometry(0.07, 0.07, 3.4, 16);
+      const straw = new THREE.Mesh(strawGeo, strawMat);
+      straw.position.set(0.1, 0.8, 0);
+      straw.rotation.z = -0.15;
+      group.add(straw);
+
     } else if (producto.tipo_3d === 'termo') {
       // Cylinder tall
       geometry = new THREE.CylinderGeometry(0.9, 0.9, 3.2, 32);

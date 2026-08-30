@@ -144,6 +144,30 @@ export const ARPreview: React.FC<ARPreviewProps> = ({ productoNombre, tipo3d, ca
       ];
       const shirt = new THREE.Mesh(plane, materials);
       group.add(shirt);
+    } else if (tipo3d === 'vaso') {
+      const cy = new THREE.CylinderGeometry(0.7, 0.7, 1.8, 32, 1, true);
+      const glassMat = new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.88,
+        roughness: 0.1,
+        side: THREE.DoubleSide
+      });
+      const body = new THREE.Mesh(cy, glassMat);
+      group.add(body);
+
+      const bottom = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 }));
+      bottom.position.y = -0.9;
+      group.add(bottom);
+
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.74, 0.15, 32), new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.4 }));
+      lid.position.y = 0.98;
+      group.add(lid);
+
+      const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.2, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 }));
+      straw.position.set(0.08, 0.5, 0);
+      straw.rotation.z = -0.15;
+      group.add(straw);
     } else if (tipo3d === 'termo') {
       const cy = new THREE.CylinderGeometry(0.6, 0.6, 2.2, 32);
       const thermo = new THREE.Mesh(cy, canvasMaterial);

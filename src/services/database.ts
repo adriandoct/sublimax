@@ -22,7 +22,7 @@ export interface Producto {
   categoria_id: string;
   imagen_url: string;
   stock: number;
-  tipo_3d: 'taza' | 'playera' | 'gorra' | 'termo' | 'cushion' | 'puzzle' | 'mousepad';
+  tipo_3d: 'taza' | 'vaso' | 'playera' | 'gorra' | 'termo' | 'cushion' | 'puzzle' | 'mousepad';
   popularidad: number;
   fecha_creacion: string;
   dimensiones?: string;
@@ -145,6 +145,7 @@ if (isSupabaseConfigured) {
 // ---------------------------------------------------------
 const DEFAULT_CATEGORIES: Categoria[] = [
   { id: 'cat-1', nombre: 'Tazas Personalizadas', descripcion: 'Tazas de cerámica, mágicas, de cristal y más', slug: 'tazas' },
+  { id: 'cat-6', nombre: 'Vasos de Vidrio', descripcion: 'Vasos de cristal con tapa de bambú y sorbete de vidrio', slug: 'vasos' },
   { id: 'cat-2', nombre: 'Playeras Sublimadas', descripcion: 'T-shirts premium con tacto algodón y Dry-Fit', slug: 'playeras' },
   { id: 'cat-3', nombre: 'Gorras Personalizadas', descripcion: 'Gorras de gabardina y tipo trucker ajustables', slug: 'gorras' },
   { id: 'cat-4', nombre: 'Termos Premium', descripcion: 'Termos de acero inoxidable y cilindros deportivos', slug: 'termos' },
@@ -152,6 +153,48 @@ const DEFAULT_CATEGORIES: Categoria[] = [
 ];
 
 const DEFAULT_PRODUCTS: Producto[] = [
+  {
+    id: 'prod-vaso-ositos',
+    nombre: 'Vaso de Vidrio Bambú - Ositos',
+    descripcion: 'Vaso de cristal transparente de 16oz con tapa hermética de madera de bambú y sorbete de vidrio, sublimado con hermosos y tiernos Ositos.',
+    precio_base: 180.00,
+    categoria_id: 'cat-6',
+    imagen_url: '/vaso_ositos.jpg',
+    stock: 150,
+    tipo_3d: 'vaso',
+    popularidad: 5,
+    fecha_creacion: '2026-08-29',
+    dimensiones: '15cm alto x 7.5cm diámetro (16 oz / 470 ml)',
+    material: 'Vidrio Borosilicato + Tapa Bambú + Sorbete Cristal'
+  },
+  {
+    id: 'prod-vaso-minions',
+    nombre: 'Vaso de Vidrio Bambú - Minions',
+    descripcion: 'Vaso de cristal transparente de 16oz con tapa hermética de bambú y sorbete de vidrio, sublimado con divertidos personajes Minions.',
+    precio_base: 180.00,
+    categoria_id: 'cat-6',
+    imagen_url: '/vaso_minions.jpg',
+    stock: 150,
+    tipo_3d: 'vaso',
+    popularidad: 5,
+    fecha_creacion: '2026-08-29',
+    dimensiones: '15cm alto x 7.5cm diámetro (16 oz / 470 ml)',
+    material: 'Vidrio Borosilicato + Tapa Bambú + Sorbete Cristal'
+  },
+  {
+    id: 'prod-vaso-base',
+    nombre: 'Vaso de Vidrio Personalizable con Tapa de Bambú',
+    descripcion: 'Vaso de cristal transparente tipo lata de 16oz con tapa de madera de bambú y sorbete. Ideal para personalizar y diseñar en 3D.',
+    precio_base: 170.00,
+    categoria_id: 'cat-6',
+    imagen_url: '/vaso_vidrio_base.jpg',
+    stock: 200,
+    tipo_3d: 'vaso',
+    popularidad: 5,
+    fecha_creacion: '2026-08-29',
+    dimensiones: '15cm alto x 7.5cm diámetro (16 oz / 470 ml)',
+    material: 'Vidrio Borosilicato + Tapa Bambú + Sorbete Cristal'
+  },
   {
     id: 'prod-taza-1',
     nombre: 'Taza de Cerámica Blanca 11oz',
@@ -278,7 +321,7 @@ export class Database {
 
   static initialize() {
     if (localStorage.getItem(this.initKey)) {
-      // Ensure any new default products are added even if already initialized
+      // Ensure any new default products & categories are added even if already initialized
       const currentProds = JSON.parse(localStorage.getItem('sublimax_productos') || '[]');
       let updated = false;
       DEFAULT_PRODUCTS.forEach(dp => {
@@ -289,6 +332,18 @@ export class Database {
       });
       if (updated) {
         localStorage.setItem('sublimax_productos', JSON.stringify(currentProds));
+      }
+
+      const currentCats = JSON.parse(localStorage.getItem('sublimax_categorias') || '[]');
+      let catUpdated = false;
+      DEFAULT_CATEGORIES.forEach(dc => {
+        if (!currentCats.some((c: Categoria) => c.id === dc.id)) {
+          currentCats.push(dc);
+          catUpdated = true;
+        }
+      });
+      if (catUpdated) {
+        localStorage.setItem('sublimax_categorias', JSON.stringify(currentCats));
       }
       return;
     }

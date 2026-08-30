@@ -394,6 +394,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                     className="w-full bg-slate-900 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white"
                   >
                     <option value="taza">Taza (3D Cylinder)</option>
+                    <option value="vaso">Vaso de Vidrio (3D Glass Can + Bamboo Lid)</option>
                     <option value="playera">Playera (3D Box/Cloth)</option>
                     <option value="gorra">Gorra (3D Dome)</option>
                     <option value="termo">Termo (3D Tube)</option>

@@ -127,10 +127,10 @@ export default function App() {
     // Simulate event matching
     let matchesEvent = true;
     if (activeEventFilter !== 'all') {
-      if (activeEventFilter === 'maestro' && !p.nombre.toLowerCase().includes('taza')) matchesEvent = false;
-      if (activeEventFilter === 'bodas' && !p.nombre.toLowerCase().includes('cojín') && !p.nombre.toLowerCase().includes('termo')) matchesEvent = false;
-      if (activeEventFilter === 'graduaciones' && !p.nombre.toLowerCase().includes('taza') && !p.nombre.toLowerCase().includes('playera')) matchesEvent = false;
-      if (activeEventFilter === 'deportes' && !p.nombre.toLowerCase().includes('termo') && !p.nombre.toLowerCase().includes('mouse')) matchesEvent = false;
+      if (activeEventFilter === 'maestro' && !p.nombre.toLowerCase().includes('taza') && !p.nombre.toLowerCase().includes('vaso')) matchesEvent = false;
+      if (activeEventFilter === 'bodas' && !p.nombre.toLowerCase().includes('cojín') && !p.nombre.toLowerCase().includes('termo') && !p.nombre.toLowerCase().includes('vaso')) matchesEvent = false;
+      if (activeEventFilter === 'graduaciones' && !p.nombre.toLowerCase().includes('taza') && !p.nombre.toLowerCase().includes('playera') && !p.nombre.toLowerCase().includes('vaso')) matchesEvent = false;
+      if (activeEventFilter === 'deportes' && !p.nombre.toLowerCase().includes('termo') && !p.nombre.toLowerCase().includes('mouse') && !p.nombre.toLowerCase().includes('vaso')) matchesEvent = false;
     }
 
     return matchesSearch && matchesCat && matchesPrice && matchesEvent;
