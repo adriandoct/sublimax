@@ -5,7 +5,7 @@ import {
   Sparkles, Upload, Check, Loader, Award, X,
   Eye, Palette, ImagePlus, UserPlus, LogIn, ShieldCheck,
   TrendingUp, DollarSign, Package, ClipboardList, CheckCircle2,
-  XCircle, Clock, Users, AlertCircle, Bell
+  XCircle, Clock, Users, AlertCircle, Bell, Pencil, Trash2
 } from 'lucide-react';
 
 interface DesignerMarketplaceProps {
@@ -206,6 +206,190 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSuccess }) => 
 };
 
 /* ─────────────────────────────────────────────
+   EDIT DESIGN MODAL
+   ───────────────────────────────────────────── */
+interface EditDesignModalProps {
+  design: Diseño;
+  onClose: () => void;
+  onSave: (updated: { titulo: string; precio: number; tipo_3d: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'; imagen_url: string }) => void;
+}
+
+const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSave }) => {
+  const [editTitle, setEditTitle] = useState(design.titulo);
+  const [editPrice, setEditPrice] = useState(design.precio);
+  const [editTipo3D, setEditTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>(design.tipo_3d || 'playera');
+  const [editImageUrl, setEditImageUrl] = useState<string>(design.imagen_url);
+  const [editFileName, setEditFileName] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Solo se permiten archivos de imagen.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert('La imagen no debe superar 8 MB.');
+      return;
+    }
+    setEditFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = ev => {
+      setEditImageUrl(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTitle.trim()) return;
+    setIsSaving(true);
+    setTimeout(() => {
+      onSave({
+        titulo: editTitle,
+        precio: Number(editPrice),
+        tipo_3d: editTipo3D,
+        imagen_url: editImageUrl,
+      });
+      setIsSaving(false);
+    }, 300);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="relative w-full max-w-4xl glass-panel rounded-3xl p-6 border-slate-800 flex flex-col gap-5 max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-400">
+              <Pencil className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white">Editar Diseño del Portafolio</h2>
+              <p className="text-xs text-slate-500">Modifica los detalles, tipo de producto o cambia la imagen.</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white bg-slate-900 rounded-xl hover:bg-slate-800 transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Edit Form */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                Imagen del Diseño
+              </label>
+              <div
+                onClick={() => editFileInputRef.current?.click()}
+                className="relative w-full min-h-[120px] rounded-2xl border-2 border-dashed border-indigo-500/40 bg-indigo-950/20 flex flex-col items-center justify-center cursor-pointer transition gap-2 p-3 hover:border-indigo-400"
+              >
+                <img src={editImageUrl} alt="Vista previa" className="max-h-24 max-w-full object-contain rounded-xl" />
+                <span className="text-[10px] text-indigo-400 underline font-semibold">
+                  {editFileName ? editFileName : 'Haz clic para reemplazar la imagen'}
+                </span>
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleEditFileChange}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                Producto a Personalizar *
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { id: 'playera', label: 'Playera', icon: '👕' },
+                  { id: 'vaso', label: 'Vaso', icon: '🥤' },
+                  { id: 'termo', label: 'Termo', icon: '🧪' },
+                  { id: 'gorra', label: 'Gorra', icon: '🧢' },
+                  { id: 'taza', label: 'Taza', icon: '☕' },
+                ].map(p => (
+                  <button
+                    type="button"
+                    key={p.id}
+                    onClick={() => setEditTipo3D(p.id as any)}
+                    className={`p-2 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                      editTipo3D === p.id
+                        ? 'bg-indigo-950/80 border-indigo-500 text-white font-bold'
+                        : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="text-xs truncate">{p.icon} {p.label}</span>
+                    {editTipo3D === p.id && <Check className="w-3.5 h-3.5 text-indigo-400 font-bold" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                Título del Diseño *
+              </label>
+              <input
+                type="text"
+                required
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                Precio Licencia / Regalía ($ MXN)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="5"
+                value={editPrice}
+                onChange={e => setEditPrice(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold rounded-xl text-xs"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || !editTitle.trim()}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40"
+              >
+                {isSaving ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+
+          {/* Live Preview Panel */}
+          <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-850 flex flex-col items-center gap-3">
+            <span className="text-xs font-bold text-slate-300">Vista Previa Actualizada</span>
+            <ProductPreview imageDataUrl={editImageUrl} title={editTitle || 'Vista previa'} tipo3D={editTipo3D} showColorPalette={true} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────
    MAIN COMPONENT
    ───────────────────────────────────────────── */
 export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
@@ -232,10 +416,35 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     currentUser?.role === 'designer' || currentUser?.role === 'admin';
   const isAdmin = currentUser?.role === 'admin';
 
+  const [editingDesign, setEditingDesign] = useState<Diseño | null>(null);
+
   const loadDesigns = () => {
     if (!currentUser) return;
     const allDesigns = Database.getDesigns();
-    setDesigns(allDesigns.filter(d => d.usuario_id === currentUser.id));
+    setDesigns(allDesigns.filter(d => 
+      d.usuario_id === currentUser.id || 
+      (currentUser.nombre && d.nombre_diseñador === currentUser.nombre)
+    ));
+  };
+
+  const handleDeleteDesign = (id: string) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este diseño de tu portafolio?')) {
+      Database.deleteDesign(id);
+      setSuccessMsg('Diseño eliminado correctamente del portafolio.');
+      loadDesigns();
+      if (isAdmin) loadAdminData();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    }
+  };
+
+  const handleSaveEditedDesign = (updatedData: { titulo: string; precio: number; tipo_3d: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'; imagen_url: string }) => {
+    if (!editingDesign) return;
+    Database.updateDesign(editingDesign.id, updatedData);
+    setSuccessMsg('¡Diseño del portafolio actualizado con éxito!');
+    setEditingDesign(null);
+    loadDesigns();
+    if (isAdmin) loadAdminData();
+    setTimeout(() => setSuccessMsg(''), 4000);
   };
 
   const loadAdminData = () => {
@@ -792,12 +1001,30 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         </div>
       )}
 
+      {/* ── EDIT DESIGN MODAL ── */}
+      {editingDesign && (
+        <EditDesignModal
+          design={editingDesign}
+          onClose={() => setEditingDesign(null)}
+          onSave={handleSaveEditedDesign}
+        />
+      )}
+
       {/* ── PORTFOLIO VIEW ── */}
       {activeView === 'portfolio' && (
         <div className="glass-panel rounded-3xl p-6 border-slate-800">
-          <h2 className="text-base font-bold text-white border-b border-slate-900 pb-3 mb-4">
-            Tu Portafolio de Diseñador
-          </h2>
+          <div className="flex items-center justify-between border-b border-slate-900 pb-3 mb-4">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Package className="w-4 h-4 text-indigo-400" />
+              Tu Portafolio de Diseñador
+            </h2>
+            <button
+              onClick={() => setActiveView('upload')}
+              className="px-4 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+            >
+              <Upload className="w-3.5 h-3.5" /> Subir Nuevo Diseño
+            </button>
+          </div>
 
           {designs.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -842,6 +1069,24 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                         ${des.precio}{' '}
                         <span className="text-[10px] text-slate-500 font-normal">MXN</span>
                       </span>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-900">
+                      <button
+                        type="button"
+                        onClick={() => setEditingDesign(des)}
+                        className="py-1.5 px-3 bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-800/40 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDesign(des.id)}
+                        className="py-1.5 px-3 bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/40 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Eliminar
+                      </button>
                     </div>
                   </div>
                 </div>

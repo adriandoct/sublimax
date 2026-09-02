@@ -951,6 +951,32 @@ export class Database {
     }
   }
 
+  static updateDesign(designId: string, updates: Partial<Omit<Diseño, 'id' | 'usuario_id'>>): Diseño | null {
+    const designs = this.getDesigns();
+    const index = designs.findIndex(d => d.id === designId);
+    if (index > -1) {
+      designs[index] = {
+        ...designs[index],
+        ...updates
+      };
+      localStorage.setItem('sublimax_diseños', JSON.stringify(designs));
+
+      if (supabaseClient && !designId.includes('des-')) {
+        supabaseClient.from('diseños')
+          .update(updates)
+          .eq('id', designId)
+          .then(({ error }) => { if (error) console.error("Error updating design in Supabase:", error); });
+      }
+      return designs[index];
+    }
+    return null;
+  }
+
+  static deleteDesign(designId: string) {
+    this.rejectDesign(designId);
+  }
+
+
   static getAllDesignersWithDesigns(): { usuario: Usuario; designs: Diseño[] }[] {
     this.initialize();
     const users: Usuario[] = JSON.parse(localStorage.getItem('sublimax_usuarios') || '[]');
