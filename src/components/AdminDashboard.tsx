@@ -656,8 +656,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-white truncate">{des.titulo}</h4>
-                      <span className="text-[10px] text-slate-400">Por: {des.nombre_diseñador}</span>
-                      <div className="flex justify-between items-center mt-2.5">
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-[10px] text-slate-400">Por: {des.nombre_diseñador}</span>
+                        <span className="text-[9px] bg-slate-900 border border-slate-800 text-indigo-300 px-2 py-0.5 rounded-full capitalize font-bold">
+                          {des.tipo_3d === 'vaso' ? '🥤 Vaso' : des.tipo_3d === 'termo' ? '🧪 Termo' : des.tipo_3d === 'gorra' ? '🧢 Gorra' : des.tipo_3d === 'taza' ? '☕ Taza' : '👕 Camisa'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
                         <span className="text-[10px] text-slate-500">Precio plantilla</span>
                         <span className="text-xs font-semibold text-emerald-400">${des.precio.toFixed(2)}</span>
                       </div>

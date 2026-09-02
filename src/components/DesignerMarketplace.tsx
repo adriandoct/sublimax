@@ -13,82 +13,154 @@ interface DesignerMarketplaceProps {
 }
 
 /* ─────────────────────────────────────────────
-   SHIRT SVG PREVIEW
-   Renders an SVG shirt silhouette with the
-   designer's uploaded image mapped onto the chest.
+   DYNAMIC MULTI-PRODUCT SVG PREVIEW
+   Renders detailed SVG product mockups for Playera, Vaso de Vidrio,
+   Termo, Gorra, and Taza with the designer's image mapped onto it.
    ───────────────────────────────────────────── */
-const ShirtPreview: React.FC<{ imageDataUrl: string | null; title: string }> = ({
+interface ProductPreviewProps {
+  imageDataUrl: string | null;
+  title: string;
+  tipo3D?: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza';
+}
+
+const ProductPreview: React.FC<ProductPreviewProps> = ({
   imageDataUrl,
   title,
+  tipo3D = 'playera',
 }) => (
-  <div className="relative flex items-center justify-center select-none">
-    {/* Shirt silhouette */}
-    <svg
-      viewBox="0 0 200 220"
-      className="w-full max-w-[260px] drop-shadow-2xl"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Body */}
-      <path
-        d="M60 30 L20 70 L45 80 L40 200 L160 200 L155 80 L180 70 L140 30 Q120 45 100 45 Q80 45 60 30Z"
-        fill="#1e293b"
-        stroke="#334155"
-        strokeWidth="1.5"
-      />
-      {/* Left sleeve */}
-      <path
-        d="M60 30 Q50 35 40 50 L20 70 L45 80 Q50 60 55 45Z"
-        fill="#1e293b"
-        stroke="#334155"
-        strokeWidth="1.5"
-      />
-      {/* Right sleeve */}
-      <path
-        d="M140 30 Q150 35 160 50 L180 70 L155 80 Q150 60 145 45Z"
-        fill="#1e293b"
-        stroke="#334155"
-        strokeWidth="1.5"
-      />
-      {/* Collar */}
-      <path
-        d="M80 30 Q100 55 120 30"
-        fill="none"
-        stroke="#475569"
-        strokeWidth="2"
-      />
+  <div className="relative flex items-center justify-center select-none w-full">
+    {tipo3D === 'playera' && (
+      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+        {/* Body */}
+        <path d="M60 30 L20 70 L45 80 L40 200 L160 200 L155 80 L180 70 L140 30 Q120 45 100 45 Q80 45 60 30Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+        {/* Sleeves */}
+        <path d="M60 30 Q50 35 40 50 L20 70 L45 80 Q50 60 55 45Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+        <path d="M140 30 Q150 35 160 50 L180 70 L155 80 Q150 60 145 45Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+        {/* Collar */}
+        <path d="M80 30 Q100 55 120 30" fill="none" stroke="#475569" strokeWidth="2" />
 
-      {/* Design print area on chest */}
-      {imageDataUrl ? (
-        <image
-          href={imageDataUrl}
-          x="65"
-          y="70"
-          width="70"
-          height="80"
-          clipPath="url(#chest-clip)"
-          style={{ objectFit: 'contain' }}
-          preserveAspectRatio="xMidYMid meet"
-        />
-      ) : (
-        <g>
-          <rect x="65" y="70" width="70" height="80" rx="4" fill="#0f172a" stroke="#334155" strokeDasharray="4 3" />
-          <text x="100" y="110" textAnchor="middle" fontSize="7" fill="#475569" fontFamily="sans-serif">
-            Vista previa
-          </text>
-          <text x="100" y="120" textAnchor="middle" fontSize="7" fill="#475569" fontFamily="sans-serif">
-            del diseño
-          </text>
-        </g>
-      )}
-      <clipPath id="chest-clip">
-        <rect x="65" y="70" width="70" height="80" rx="4" />
-      </clipPath>
+        {/* Print area */}
+        {imageDataUrl ? (
+          <image href={imageDataUrl} x="65" y="70" width="70" height="80" clipPath="url(#chest-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+        ) : (
+          <g>
+            <rect x="65" y="70" width="70" height="80" rx="4" fill="#0f172a" stroke="#334155" strokeDasharray="4 3" />
+            <text x="100" y="110" textAnchor="middle" fontSize="7" fill="#475569" fontFamily="sans-serif">Vista previa</text>
+            <text x="100" y="120" textAnchor="middle" fontSize="7" fill="#475569" fontFamily="sans-serif">Playera / Camisa</text>
+          </g>
+        )}
+        <clipPath id="chest-clip">
+          <rect x="65" y="70" width="70" height="80" rx="4" />
+        </clipPath>
+        <text x="100" y="194" textAnchor="middle" fontSize="5.5" fill="#334155" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+      </svg>
+    )}
 
-      {/* Brand tag at bottom */}
-      <text x="100" y="194" textAnchor="middle" fontSize="5.5" fill="#334155" fontFamily="sans-serif" fontWeight="bold">
-        SUBLIMAX STUDIO
-      </text>
-    </svg>
+    {tipo3D === 'vaso' && (
+      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+        {/* Glass Straw */}
+        <line x1="108" y1="12" x2="102" y2="40" stroke="#cbd5e1" strokeWidth="4.5" strokeLinecap="round" opacity="0.8" />
+        {/* Bamboo Lid */}
+        <rect x="65" y="32" width="70" height="14" rx="4" fill="#d97706" stroke="#92400e" strokeWidth="1.5" />
+        <line x1="68" y1="39" x2="132" y2="39" stroke="#b45309" strokeWidth="1" strokeDasharray="6 3" />
+        {/* Glass Can Body */}
+        <rect x="67" y="46" width="66" height="145" rx="14" fill="#0f172a" fillOpacity="0.75" stroke="#38bdf8" strokeWidth="1.5" />
+        <path d="M72 52 L72 184" stroke="#e0f2fe" strokeWidth="2.5" opacity="0.25" strokeLinecap="round" />
+
+        {/* Print Area */}
+        {imageDataUrl ? (
+          <image href={imageDataUrl} x="70" y="60" width="60" height="115" clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+        ) : (
+          <g>
+            <rect x="70" y="60" width="60" height="115" rx="6" fill="#0284c7" fillOpacity="0.1" stroke="#0284c7" strokeDasharray="4 3" />
+            <text x="100" y="115" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vista previa</text>
+            <text x="100" y="125" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vaso de Vidrio</text>
+          </g>
+        )}
+        <clipPath id="vaso-clip">
+          <rect x="70" y="60" width="60" height="115" rx="6" />
+        </clipPath>
+        <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill="#38bdf8" opacity="0.6" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+      </svg>
+    )}
+
+    {tipo3D === 'termo' && (
+      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+        {/* Metallic Cap */}
+        <path d="M92 20 C92 10 108 10 108 20 Z" fill="none" stroke="#64748b" strokeWidth="3" />
+        <rect x="75" y="24" width="50" height="14" rx="3" fill="#334155" stroke="#475569" strokeWidth="1.5" />
+        <rect x="80" y="38" width="40" height="10" fill="#1e293b" stroke="#334155" strokeWidth="1" />
+        {/* Body */}
+        <path d="M72 48 L128 48 L128 190 Q128 198 120 198 L80 198 Q72 198 72 190 Z" fill="#1e293b" stroke="#475569" strokeWidth="1.5" />
+        <path d="M78 52 L78 194" stroke="#94a3b8" strokeWidth="3" opacity="0.3" strokeLinecap="round" />
+
+        {/* Print Area */}
+        {imageDataUrl ? (
+          <image href={imageDataUrl} x="75" y="65" width="50" height="115" clipPath="url(#termo-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+        ) : (
+          <g>
+            <rect x="75" y="65" width="50" height="115" rx="4" fill="#0f172a" stroke="#475569" strokeDasharray="4 3" />
+            <text x="100" y="118" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Vista previa</text>
+            <text x="100" y="128" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Termo Acero</text>
+          </g>
+        )}
+        <clipPath id="termo-clip">
+          <rect x="75" y="65" width="50" height="115" rx="4" />
+        </clipPath>
+        <text x="100" y="190" textAnchor="middle" fontSize="5.5" fill="#475569" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+      </svg>
+    )}
+
+    {tipo3D === 'gorra' && (
+      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="55" r="4" fill="#475569" stroke="#1e293b" strokeWidth="1" />
+        <path d="M45 130 C45 75 155 75 155 130 Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+        <path d="M125 90 Q145 105 150 130" stroke="#334155" strokeWidth="1" strokeDasharray="2 2" fill="none" />
+        <path d="M75 90 Q55 105 50 130" stroke="#334155" strokeWidth="1" strokeDasharray="2 2" fill="none" />
+        <path d="M30 130 Q100 160 170 130 L180 142 Q100 175 20 142 Z" fill="#0f172a" stroke="#334155" strokeWidth="1.5" />
+
+        {/* Print Area */}
+        {imageDataUrl ? (
+          <image href={imageDataUrl} x="70" y="80" width="60" height="42" clipPath="url(#gorra-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+        ) : (
+          <g>
+            <rect x="70" y="80" width="60" height="42" rx="4" fill="#0f172a" stroke="#475569" strokeDasharray="4 3" />
+            <text x="100" y="100" textAnchor="middle" fontSize="6.5" fill="#64748b" fontFamily="sans-serif">Vista previa</text>
+            <text x="100" y="108" textAnchor="middle" fontSize="6.5" fill="#64748b" fontFamily="sans-serif">Gorra</text>
+          </g>
+        )}
+        <clipPath id="gorra-clip">
+          <rect x="70" y="80" width="60" height="42" rx="4" />
+        </clipPath>
+        <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill="#475569" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+      </svg>
+    )}
+
+    {tipo3D === 'taza' && (
+      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+        <path d="M140 75 Q180 75 180 120 Q180 165 140 165" fill="none" stroke="#334155" strokeWidth="16" strokeLinecap="round" />
+        <path d="M140 75 Q180 75 180 120 Q180 165 140 165" fill="none" stroke="#1e293b" strokeWidth="10" strokeLinecap="round" />
+        <rect x="60" y="55" width="80" height="115" rx="8" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
+        <ellipse cx="100" cy="55" rx="40" ry="8" fill="#334155" stroke="#475569" strokeWidth="1" />
+        <ellipse cx="100" cy="55" rx="36" ry="6" fill="#0f172a" />
+        <path d="M66 68 L66 162" stroke="#64748b" strokeWidth="3" opacity="0.3" strokeLinecap="round" />
+
+        {/* Print Area */}
+        {imageDataUrl ? (
+          <image href={imageDataUrl} x="68" y="70" width="64" height="85" clipPath="url(#taza-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+        ) : (
+          <g>
+            <rect x="68" y="70" width="64" height="85" rx="4" fill="#0f172a" stroke="#475569" strokeDasharray="4 3" />
+            <text x="100" y="108" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Vista previa</text>
+            <text x="100" y="118" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Taza Cerámica</text>
+          </g>
+        )}
+        <clipPath id="taza-clip">
+          <rect x="68" y="70" width="64" height="85" rx="4" />
+        </clipPath>
+        <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill="#475569" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+      </svg>
+    )}
 
     {/* Floating label */}
     {title && (
@@ -301,6 +373,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState(0);
+  const [tipo3D, setTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>('playera');
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageFileName, setImageFileName] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -380,6 +453,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         titulo: title,
         imagen_url: imageDataUrl,
         precio: Number(price),
+        tipo_3d: tipo3D,
       });
 
       setTitle('');
@@ -750,6 +824,39 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                 </div>
               </div>
 
+              {/* Product Type Selector */}
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                  Producto a Personalizar *
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { id: 'playera', label: 'Playera / Camisa', icon: '👕' },
+                    { id: 'vaso', label: 'Vaso de Vidrio', icon: '🥤' },
+                    { id: 'termo', label: 'Termo de Acero', icon: '🧪' },
+                    { id: 'gorra', label: 'Gorra Trucker', icon: '🧢' },
+                    { id: 'taza', label: 'Taza Cerámica', icon: '☕' },
+                  ].map(p => (
+                    <button
+                      type="button"
+                      key={p.id}
+                      onClick={() => setTipo3D(p.id as any)}
+                      className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition cursor-pointer ${
+                        tipo3D === p.id
+                          ? 'bg-indigo-950/80 border-indigo-500 text-white shadow-md shadow-indigo-950/50'
+                          : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-base">{p.icon}</span>
+                        {tipo3D === p.id && <Check className="w-3.5 h-3.5 text-indigo-400 font-bold" />}
+                      </div>
+                      <span className="text-xs font-bold mt-1.5 block truncate">{p.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Title */}
               <div>
                 <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">
@@ -800,19 +907,24 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
             </form>
           </div>
 
-          {/* Live shirt preview panel */}
+          {/* Live preview panel */}
           <div className="glass-panel rounded-3xl p-6 border-slate-800 flex flex-col items-center gap-5">
             <div className="text-center">
               <h3 className="text-base font-bold text-white flex items-center justify-center gap-2">
                 <Eye className="w-4 h-4 text-indigo-400" />
-                Vista Previa en Camisa
+                Vista Previa en {
+                  tipo3D === 'playera' ? 'Playera / Camisa' :
+                  tipo3D === 'vaso' ? 'Vaso de Vidrio Bambú' :
+                  tipo3D === 'termo' ? 'Termo de Acero Inoxidable' :
+                  tipo3D === 'gorra' ? 'Gorra Trucker' : 'Taza de Cerámica'
+                }
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Así lucirá tu diseño impreso en la playera.
+                Así lucirá tu diseño impreso en el producto seleccionado.
               </p>
             </div>
 
-            <ShirtPreview imageDataUrl={imageDataUrl} title={title || 'Tu diseño aquí'} />
+            <ProductPreview imageDataUrl={imageDataUrl} title={title || 'Tu diseño aquí'} tipo3D={tipo3D} />
 
             <div className="w-full bg-slate-950/60 rounded-2xl p-4 border border-slate-900 text-center">
               <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">
@@ -820,9 +932,9 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
               </span>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-left mt-2">
                 {[
-                  ['Técnica', 'Sublimación Digital'],
-                  ['Área', '18 × 22 cm (pecho)'],
-                  ['Soporte', 'Playera Poliéster 100%'],
+                  ['Técnica', 'Sublimación Digital HD'],
+                  ['Área', tipo3D === 'playera' ? '18 × 22 cm' : tipo3D === 'vaso' ? '15 × 23 cm (Wrap)' : tipo3D === 'termo' ? '14 × 21 cm (Wrap)' : tipo3D === 'gorra' ? '12 × 7 cm (Parche)' : '19 × 8.5 cm (Wrap)'],
+                  ['Soporte', tipo3D === 'playera' ? 'Poliéster 100%' : tipo3D === 'vaso' ? 'Vidrio Borosilicato + Bambú' : tipo3D === 'termo' ? 'Acero Inoxidable 304' : tipo3D === 'gorra' ? 'Gabardina y Malla' : 'Cerámica Premium AAA'],
                   ['Colores', 'Full-color ilimitado'],
                 ].map(([k, v]) => (
                   <div key={k}>
@@ -870,7 +982,10 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
 
                   {/* Thumbnail */}
                   <div className="relative bg-slate-900/40 p-4 flex items-center justify-center min-h-[160px]">
-                    <ShirtPreview imageDataUrl={des.imagen_url} title="" />
+                    <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} />
+                    <span className="absolute top-2 right-2 text-[9px] font-bold bg-slate-900/80 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-full capitalize">
+                      {des.tipo_3d === 'vaso' ? '🥤 Vaso Vidrio' : des.tipo_3d === 'termo' ? '🧪 Termo' : des.tipo_3d === 'gorra' ? '🧢 Gorra' : des.tipo_3d === 'taza' ? '☕ Taza' : '👕 Playera'}
+                    </span>
                   </div>
 
                   {/* Info */}
@@ -1023,9 +1138,12 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                             </span>
                           </div>
 
-                          {/* Shirt thumbnail */}
-                          <div className="bg-slate-900/40 p-3 flex items-center justify-center min-h-[140px]">
-                            <ShirtPreview imageDataUrl={des.imagen_url} title="" />
+                          {/* Product thumbnail */}
+                          <div className="relative bg-slate-900/40 p-3 flex items-center justify-center min-h-[140px]">
+                            <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} />
+                            <span className="absolute top-2 right-2 text-[9px] font-bold bg-slate-900/80 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-full capitalize">
+                              {des.tipo_3d === 'vaso' ? '🥤 Vaso Vidrio' : des.tipo_3d === 'termo' ? '🧪 Termo' : des.tipo_3d === 'gorra' ? '🧢 Gorra' : des.tipo_3d === 'taza' ? '☕ Taza' : '👕 Playera'}
+                            </span>
                           </div>
 
                           {/* Info */}
@@ -1122,7 +1240,7 @@ const PublicDesignsGrid: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {publicDesigns.map(d => (
           <div key={d.id} className="glass-panel rounded-2xl p-3 border-slate-850 flex flex-col items-center gap-2">
-            <ShirtPreview imageDataUrl={d.imagen_url} title="" />
+            <ProductPreview imageDataUrl={d.imagen_url} title="" tipo3D={d.tipo_3d || 'playera'} />
             <span className="text-xs font-bold text-white truncate w-full text-center">{d.titulo}</span>
             <span className="text-[10px] text-indigo-400">por {d.nombre_diseñador}</span>
           </div>

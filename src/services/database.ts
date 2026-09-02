@@ -43,6 +43,7 @@ export interface Diseño {
   titulo: string;
   imagen_url: string;
   precio: number;
+  tipo_3d?: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza';
   categoria_id?: string;
   ventas: number;
   aprobado: boolean;
@@ -843,6 +844,7 @@ export class Database {
         titulo: design.titulo,
         imagen_url: design.imagen_url,
         precio: design.precio,
+        tipo_3d: design.tipo_3d || 'playera',
         aprobado: false
       }).then(({ error }) => { if (error) console.error("Error uploading design to Supabase:", error); });
     }
