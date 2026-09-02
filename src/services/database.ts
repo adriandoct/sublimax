@@ -316,13 +316,71 @@ const DEFAULT_COUPONS: Cupon[] = [
   { id: 'cup-3', codigo: 'CECYTEPROMO', tipo: 'porcentaje', valor: 25, activo: true, usos: 0 }
 ];
 
+const DEFAULT_DESIGNS: Diseño[] = [
+  {
+    id: 'des-demo-1',
+    usuario_id: 'user-creator-1',
+    nombre_diseñador: 'Diseñador Google Pro',
+    titulo: 'Ilustración Ositos Tiernos en Vaso',
+    imagen_url: '/vaso_ositos.jpg',
+    precio: 25,
+    tipo_3d: 'vaso',
+    ventas: 0,
+    aprobado: false
+  },
+  {
+    id: 'des-demo-2',
+    usuario_id: 'user-creator-2',
+    nombre_diseñador: 'Creador Sublimax',
+    titulo: 'Máscara Clown Punk Colorida',
+    imagen_url: '/playera_clown_color.png',
+    precio: 40,
+    tipo_3d: 'playera',
+    ventas: 0,
+    aprobado: false
+  },
+  {
+    id: 'des-demo-3',
+    usuario_id: 'user-creator-3',
+    nombre_diseñador: 'Studio Arte Digital',
+    titulo: 'Lucha Libre Azul Estilización',
+    imagen_url: '/playera_lucha_azul.png',
+    precio: 35,
+    tipo_3d: 'gorra',
+    ventas: 0,
+    aprobado: false
+  },
+  {
+    id: 'des-demo-4',
+    usuario_id: 'user-creator-4',
+    nombre_diseñador: 'Ilustradora Sofía',
+    titulo: 'Minions Fun Sublimado en Taza',
+    imagen_url: '/vaso_minions.jpg',
+    precio: 30,
+    tipo_3d: 'taza',
+    ventas: 3,
+    aprobado: true
+  },
+  {
+    id: 'des-demo-5',
+    usuario_id: 'user-creator-5',
+    nombre_diseñador: 'Diseños Creativos MX',
+    titulo: 'Geometría Brillante en Termo Acero',
+    imagen_url: '/playera_clown_sequin.png',
+    precio: 50,
+    tipo_3d: 'termo',
+    ventas: 0,
+    aprobado: false
+  }
+];
+
 // Helper to initialize and retrieve public database API
 export class Database {
   private static initKey = 'sublimax_db_initialized';
 
   static initialize() {
     if (localStorage.getItem(this.initKey)) {
-      // Ensure any new default products & categories are added even if already initialized
+      // Ensure any new default products & categories & designs are added even if already initialized
       const currentProds = JSON.parse(localStorage.getItem('sublimax_productos') || '[]');
       let updated = false;
       DEFAULT_PRODUCTS.forEach(dp => {
@@ -346,12 +404,24 @@ export class Database {
       if (catUpdated) {
         localStorage.setItem('sublimax_categorias', JSON.stringify(currentCats));
       }
+
+      const currentDesigns = JSON.parse(localStorage.getItem('sublimax_diseños') || '[]');
+      let desUpdated = false;
+      DEFAULT_DESIGNS.forEach(dd => {
+        if (!currentDesigns.some((d: Diseño) => d.id === dd.id)) {
+          currentDesigns.push(dd);
+          desUpdated = true;
+        }
+      });
+      if (desUpdated) {
+        localStorage.setItem('sublimax_diseños', JSON.stringify(currentDesigns));
+      }
       return;
     }
 
     localStorage.setItem('sublimax_categorias', JSON.stringify(DEFAULT_CATEGORIES));
     localStorage.setItem('sublimax_productos', JSON.stringify(DEFAULT_PRODUCTS));
-    localStorage.setItem('sublimax_diseños', JSON.stringify([]));
+    localStorage.setItem('sublimax_diseños', JSON.stringify(DEFAULT_DESIGNS));
     localStorage.setItem('sublimax_cupones', JSON.stringify(DEFAULT_COUPONS));
     localStorage.setItem('sublimax_reseñas', JSON.stringify([]));
     localStorage.setItem('sublimax_pedidos', JSON.stringify([]));
