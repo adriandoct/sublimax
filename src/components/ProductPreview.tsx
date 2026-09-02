@@ -1,155 +1,314 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Palette, Check } from 'lucide-react';
 
 export interface ProductPreviewProps {
   imageDataUrl: string | null;
   title: string;
   tipo3D?: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza';
+  productColor?: string;
+  onColorChange?: (color: string) => void;
+  showColorPalette?: boolean;
 }
+
+export const PRESET_COLORS = [
+  { name: 'Negro Carbón', hex: '#1e293b' },
+  { name: 'Blanco Puro', hex: '#ffffff' },
+  { name: 'Azul Rey', hex: '#1e3a8a' },
+  { name: 'Rojo Pasión', hex: '#b91c1c' },
+  { name: 'Verde Esmeralda', hex: '#047857' },
+  { name: 'Rosa Magenta', hex: '#be185d' },
+  { name: 'Amarillo Miel', hex: '#d97706' },
+  { name: 'Violeta Neón', hex: '#6b21a8' },
+  { name: 'Gris Titanio', hex: '#475569' },
+];
 
 export const ProductPreview: React.FC<ProductPreviewProps> = ({
   imageDataUrl,
   title,
   tipo3D = 'playera',
-}) => (
-  <div className="relative flex items-center justify-center select-none w-full">
-    {tipo3D === 'playera' && (
-      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-        {/* Body */}
-        <path d="M60 30 L20 70 L45 80 L40 200 L160 200 L155 80 L180 70 L140 30 Q120 45 100 45 Q80 45 60 30Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-        {/* Sleeves */}
-        <path d="M60 30 Q50 35 40 50 L20 70 L45 80 Q50 60 55 45Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-        <path d="M140 30 Q150 35 160 50 L180 70 L155 80 Q150 60 145 45Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-        {/* Collar */}
-        <path d="M80 30 Q100 55 120 30" fill="none" stroke="#475569" strokeWidth="2" />
+  productColor: externalColor,
+  onColorChange,
+  showColorPalette = true,
+}) => {
+  const [internalColor, setInternalColor] = useState('#1e293b');
+  const currentColor = externalColor !== undefined ? externalColor : internalColor;
 
-        {/* Print area */}
-        {imageDataUrl ? (
-          <image href={imageDataUrl} x="65" y="70" width="70" height="80" clipPath="url(#chest-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
-        ) : (
-          <g>
-            <rect x="65" y="70" width="70" height="80" rx="4" fill="#0f172a" stroke="#334155" strokeDasharray="4 3" />
-            <text x="100" y="110" textAnchor="middle" fontSize="7" fill="#475569" fontFamily="sans-serif">Vista previa</text>
-            <text x="100" y="120" textAnchor="middle" fontSize="7" fill="#475569" fontFamily="sans-serif">Playera / Camisa</text>
-          </g>
+  const handleSelectColor = (hex: string) => {
+    setInternalColor(hex);
+    if (onColorChange) {
+      onColorChange(hex);
+    }
+  };
+
+  // Determine light vs dark color for contrast calculations
+  const isLightColor = (hex: string) => {
+    const cleanHex = hex.replace('#', '');
+    if (cleanHex.length !== 6) return false;
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 165;
+  };
+
+  const isLight = isLightColor(currentColor);
+  const strokeColor = isLight ? '#64748b' : '#334155';
+  const rimColor = isLight ? '#cbd5e1' : '#475569';
+  const highlightOpacity = isLight ? 0.6 : 0.25;
+  const innerMugColor = isLight ? '#334155' : '#0f172a';
+  const brandingTextColor = isLight ? '#475569' : '#94a3b8';
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      {/* 2D SVG Realistic Product Mockup */}
+      <div className="relative flex items-center justify-center select-none w-full">
+        {tipo3D === 'playera' && (
+          <svg viewBox="0 0 200 220" className="w-full max-w-[260px] filter drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="shirt-shadow" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#000000" stopOpacity="0.2" />
+                <stop offset="25%" stopColor="#ffffff" stopOpacity="0.1" />
+                <stop offset="75%" stopColor="#ffffff" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
+              </linearGradient>
+            </defs>
+
+            {/* Body */}
+            <path d="M60 30 L20 70 L45 80 L40 200 L160 200 L155 80 L180 70 L140 30 Q120 45 100 45 Q80 45 60 30Z" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+            <path d="M60 30 L20 70 L45 80 L40 200 L160 200 L155 80 L180 70 L140 30 Q120 45 100 45 Q80 45 60 30Z" fill="url(#shirt-shadow)" />
+
+            {/* Sleeves */}
+            <path d="M60 30 Q50 35 40 50 L20 70 L45 80 Q50 60 55 45Z" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+            <path d="M140 30 Q150 35 160 50 L180 70 L155 80 Q150 60 145 45Z" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+
+            {/* Collar seam */}
+            <path d="M80 30 Q100 55 120 30" fill="none" stroke={strokeColor} strokeWidth="2.5" />
+
+            {/* Print area */}
+            {imageDataUrl ? (
+              <image href={imageDataUrl} x="65" y="70" width="70" height="80" clipPath="url(#chest-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+            ) : (
+              <g>
+                <rect x="65" y="70" width="70" height="80" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
+                <text x="100" y="110" textAnchor="middle" fontSize="7" fill={brandingTextColor} fontFamily="sans-serif">Vista previa</text>
+                <text x="100" y="120" textAnchor="middle" fontSize="7" fill={brandingTextColor} fontFamily="sans-serif">Playera / Camisa</text>
+              </g>
+            )}
+            <clipPath id="chest-clip">
+              <rect x="65" y="70" width="70" height="80" rx="4" />
+            </clipPath>
+            <text x="100" y="194" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+          </svg>
         )}
-        <clipPath id="chest-clip">
-          <rect x="65" y="70" width="70" height="80" rx="4" />
-        </clipPath>
-        <text x="100" y="194" textAnchor="middle" fontSize="5.5" fill="#334155" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
-      </svg>
-    )}
 
-    {tipo3D === 'vaso' && (
-      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-        {/* Glass Straw */}
-        <line x1="108" y1="12" x2="102" y2="40" stroke="#cbd5e1" strokeWidth="4.5" strokeLinecap="round" opacity="0.8" />
-        {/* Bamboo Lid */}
-        <rect x="65" y="32" width="70" height="14" rx="4" fill="#d97706" stroke="#92400e" strokeWidth="1.5" />
-        <line x1="68" y1="39" x2="132" y2="39" stroke="#b45309" strokeWidth="1" strokeDasharray="6 3" />
-        {/* Glass Can Body */}
-        <rect x="67" y="46" width="66" height="145" rx="14" fill="#0f172a" fillOpacity="0.75" stroke="#38bdf8" strokeWidth="1.5" />
-        <path d="M72 52 L72 184" stroke="#e0f2fe" strokeWidth="2.5" opacity="0.25" strokeLinecap="round" />
+        {tipo3D === 'vaso' && (
+          <svg viewBox="0 0 200 220" className="w-full max-w-[260px] filter drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+            {/* Glass Straw */}
+            <line x1="108" y1="12" x2="102" y2="40" stroke="#cbd5e1" strokeWidth="4.5" strokeLinecap="round" opacity="0.9" />
+            {/* Bamboo Lid */}
+            <rect x="65" y="32" width="70" height="14" rx="4" fill="#d97706" stroke="#92400e" strokeWidth="1.5" />
+            <line x1="68" y1="39" x2="132" y2="39" stroke="#b45309" strokeWidth="1" strokeDasharray="6 3" />
+            
+            {/* Glass Can Body */}
+            <rect x="67" y="46" width="66" height="145" rx="14" fill={currentColor} fillOpacity={isLight ? 0.35 : 0.6} stroke={strokeColor} strokeWidth="1.5" />
+            <path d="M72 52 L72 184" stroke="#ffffff" strokeWidth="2.5" opacity={highlightOpacity} strokeLinecap="round" />
 
-        {/* Print Area */}
-        {imageDataUrl ? (
-          <image href={imageDataUrl} x="70" y="60" width="60" height="115" clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
-        ) : (
-          <g>
-            <rect x="70" y="60" width="60" height="115" rx="6" fill="#0284c7" fillOpacity="0.1" stroke="#0284c7" strokeDasharray="4 3" />
-            <text x="100" y="115" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vista previa</text>
-            <text x="100" y="125" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vaso de Vidrio</text>
-          </g>
+            {/* Print Area */}
+            {imageDataUrl ? (
+              <image href={imageDataUrl} x="70" y="60" width="60" height="115" clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+            ) : (
+              <g>
+                <rect x="70" y="60" width="60" height="115" rx="6" fill={isLight ? '#f1f5f9' : '#0f172a'} fillOpacity="0.8" stroke="#38bdf8" strokeDasharray="4 3" />
+                <text x="100" y="115" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vista previa</text>
+                <text x="100" y="125" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vaso de Vidrio</text>
+              </g>
+            )}
+            <clipPath id="vaso-clip">
+              <rect x="70" y="60" width="60" height="115" rx="6" />
+            </clipPath>
+            <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} opacity="0.8" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+          </svg>
         )}
-        <clipPath id="vaso-clip">
-          <rect x="70" y="60" width="60" height="115" rx="6" />
-        </clipPath>
-        <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill="#38bdf8" opacity="0.6" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
-      </svg>
-    )}
 
-    {tipo3D === 'termo' && (
-      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-        {/* Metallic Cap */}
-        <path d="M92 20 C92 10 108 10 108 20 Z" fill="none" stroke="#64748b" strokeWidth="3" />
-        <rect x="75" y="24" width="50" height="14" rx="3" fill="#334155" stroke="#475569" strokeWidth="1.5" />
-        <rect x="80" y="38" width="40" height="10" fill="#1e293b" stroke="#334155" strokeWidth="1" />
-        {/* Body */}
-        <path d="M72 48 L128 48 L128 190 Q128 198 120 198 L80 198 Q72 198 72 190 Z" fill="#1e293b" stroke="#475569" strokeWidth="1.5" />
-        <path d="M78 52 L78 194" stroke="#94a3b8" strokeWidth="3" opacity="0.3" strokeLinecap="round" />
+        {tipo3D === 'termo' && (
+          <svg viewBox="0 0 200 220" className="w-full max-w-[260px] filter drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="termo-glare" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.0" />
+                <stop offset="15%" stopColor="#ffffff" stopOpacity={highlightOpacity} />
+                <stop offset="35%" stopColor="#ffffff" stopOpacity="0.0" />
+                <stop offset="85%" stopColor="#000000" stopOpacity="0.15" />
+              </linearGradient>
+            </defs>
 
-        {/* Print Area */}
-        {imageDataUrl ? (
-          <image href={imageDataUrl} x="75" y="65" width="50" height="115" clipPath="url(#termo-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
-        ) : (
-          <g>
-            <rect x="75" y="65" width="50" height="115" rx="4" fill="#0f172a" stroke="#475569" strokeDasharray="4 3" />
-            <text x="100" y="118" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Vista previa</text>
-            <text x="100" y="128" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Termo Acero</text>
-          </g>
+            {/* Metallic Cap */}
+            <path d="M92 20 C92 10 108 10 108 20 Z" fill="none" stroke="#64748b" strokeWidth="3" />
+            <rect x="75" y="24" width="50" height="14" rx="3" fill="#334155" stroke="#475569" strokeWidth="1.5" />
+            <rect x="80" y="38" width="40" height="10" fill="#1e293b" stroke="#334155" strokeWidth="1" />
+            
+            {/* Body */}
+            <path d="M72 48 L128 48 L128 190 Q128 198 120 198 L80 198 Q72 198 72 190 Z" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+            <path d="M72 48 L128 48 L128 190 Q128 198 120 198 L80 198 Q72 198 72 190 Z" fill="url(#termo-glare)" />
+            <path d="M78 52 L78 194" stroke="#ffffff" strokeWidth="3" opacity={highlightOpacity} strokeLinecap="round" />
+
+            {/* Print Area */}
+            {imageDataUrl ? (
+              <image href={imageDataUrl} x="75" y="65" width="50" height="115" clipPath="url(#termo-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+            ) : (
+              <g>
+                <rect x="75" y="65" width="50" height="115" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
+                <text x="100" y="118" textAnchor="middle" fontSize="7" fill={brandingTextColor} fontFamily="sans-serif">Vista previa</text>
+                <text x="100" y="128" textAnchor="middle" fontSize="7" fill={brandingTextColor} fontFamily="sans-serif">Termo Acero</text>
+              </g>
+            )}
+            <clipPath id="termo-clip">
+              <rect x="75" y="65" width="50" height="115" rx="4" />
+            </clipPath>
+            <text x="100" y="190" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+          </svg>
         )}
-        <clipPath id="termo-clip">
-          <rect x="75" y="65" width="50" height="115" rx="4" />
-        </clipPath>
-        <text x="100" y="190" textAnchor="middle" fontSize="5.5" fill="#475569" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
-      </svg>
-    )}
 
-    {tipo3D === 'gorra' && (
-      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="55" r="4" fill="#475569" stroke="#1e293b" strokeWidth="1" />
-        <path d="M45 130 C45 75 155 75 155 130 Z" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-        <path d="M125 90 Q145 105 150 130" stroke="#334155" strokeWidth="1" strokeDasharray="2 2" fill="none" />
-        <path d="M75 90 Q55 105 50 130" stroke="#334155" strokeWidth="1" strokeDasharray="2 2" fill="none" />
-        <path d="M30 130 Q100 160 170 130 L180 142 Q100 175 20 142 Z" fill="#0f172a" stroke="#334155" strokeWidth="1.5" />
+        {tipo3D === 'gorra' && (
+          <svg viewBox="0 0 200 220" className="w-full max-w-[260px] filter drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="55" r="4" fill="#475569" stroke="#1e293b" strokeWidth="1" />
+            {/* Crown */}
+            <path d="M45 130 C45 75 155 75 155 130 Z" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+            <path d="M125 90 Q145 105 150 130" stroke={strokeColor} strokeWidth="1" strokeDasharray="2 2" fill="none" />
+            <path d="M75 90 Q55 105 50 130" stroke={strokeColor} strokeWidth="1" strokeDasharray="2 2" fill="none" />
+            {/* Visor / Brim */}
+            <path d="M30 130 Q100 160 170 130 L180 142 Q100 175 20 142 Z" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+            <path d="M30 130 Q100 160 170 130 L180 142 Q100 175 20 142 Z" fill="#000000" fillOpacity="0.15" />
 
-        {/* Print Area */}
-        {imageDataUrl ? (
-          <image href={imageDataUrl} x="70" y="80" width="60" height="42" clipPath="url(#gorra-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
-        ) : (
-          <g>
-            <rect x="70" y="80" width="60" height="42" rx="4" fill="#0f172a" stroke="#475569" strokeDasharray="4 3" />
-            <text x="100" y="100" textAnchor="middle" fontSize="6.5" fill="#64748b" fontFamily="sans-serif">Vista previa</text>
-            <text x="100" y="108" textAnchor="middle" fontSize="6.5" fill="#64748b" fontFamily="sans-serif">Gorra</text>
-          </g>
+            {/* Print Area */}
+            {imageDataUrl ? (
+              <image href={imageDataUrl} x="70" y="80" width="60" height="42" clipPath="url(#gorra-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+            ) : (
+              <g>
+                <rect x="70" y="80" width="60" height="42" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
+                <text x="100" y="100" textAnchor="middle" fontSize="6.5" fill={brandingTextColor} fontFamily="sans-serif">Vista previa</text>
+                <text x="100" y="108" textAnchor="middle" fontSize="6.5" fill={brandingTextColor} fontFamily="sans-serif">Gorra</text>
+              </g>
+            )}
+            <clipPath id="gorra-clip">
+              <rect x="70" y="80" width="60" height="42" rx="4" />
+            </clipPath>
+            <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+          </svg>
         )}
-        <clipPath id="gorra-clip">
-          <rect x="70" y="80" width="60" height="42" rx="4" />
-        </clipPath>
-        <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill="#475569" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
-      </svg>
-    )}
 
-    {tipo3D === 'taza' && (
-      <svg viewBox="0 0 200 220" className="w-full max-w-[260px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-        <path d="M140 75 Q180 75 180 120 Q180 165 140 165" fill="none" stroke="#334155" strokeWidth="16" strokeLinecap="round" />
-        <path d="M140 75 Q180 75 180 120 Q180 165 140 165" fill="none" stroke="#1e293b" strokeWidth="10" strokeLinecap="round" />
-        <rect x="60" y="55" width="80" height="115" rx="8" fill="#1e293b" stroke="#334155" strokeWidth="1.5" />
-        <ellipse cx="100" cy="55" rx="40" ry="8" fill="#334155" stroke="#475569" strokeWidth="1" />
-        <ellipse cx="100" cy="55" rx="36" ry="6" fill="#0f172a" />
-        <path d="M66 68 L66 162" stroke="#64748b" strokeWidth="3" opacity="0.3" strokeLinecap="round" />
+        {tipo3D === 'taza' && (
+          <svg viewBox="0 0 200 220" className="w-full max-w-[260px] filter drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="mug-specular" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity={highlightOpacity} />
+                <stop offset="20%" stopColor="#ffffff" stopOpacity="0.0" />
+                <stop offset="80%" stopColor="#000000" stopOpacity="0.0" />
+                <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
+              </linearGradient>
+            </defs>
 
-        {/* Print Area */}
-        {imageDataUrl ? (
-          <image href={imageDataUrl} x="68" y="70" width="64" height="85" clipPath="url(#taza-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
-        ) : (
-          <g>
-            <rect x="68" y="70" width="64" height="85" rx="4" fill="#0f172a" stroke="#475569" strokeDasharray="4 3" />
-            <text x="100" y="108" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Vista previa</text>
-            <text x="100" y="118" textAnchor="middle" fontSize="7" fill="#64748b" fontFamily="sans-serif">Taza Cerámica</text>
-          </g>
+            {/* Handle */}
+            <path d="M140 75 Q180 75 180 120 Q180 165 140 165" fill="none" stroke={strokeColor} strokeWidth="16" strokeLinecap="round" />
+            <path d="M140 75 Q180 75 180 120 Q180 165 140 165" fill="none" stroke={currentColor} strokeWidth="10" strokeLinecap="round" />
+
+            {/* Mug Body */}
+            <rect x="60" y="55" width="80" height="115" rx="8" fill={currentColor} stroke={strokeColor} strokeWidth="1.5" />
+            <rect x="60" y="55" width="80" height="115" rx="8" fill="url(#mug-specular)" />
+
+            {/* Top Outer Rim */}
+            <ellipse cx="100" cy="55" rx="40" ry="8" fill={rimColor} stroke={strokeColor} strokeWidth="1" />
+            {/* Top Inner Hole */}
+            <ellipse cx="100" cy="55" rx="36" ry="6" fill={innerMugColor} />
+
+            {/* Gloss reflection line */}
+            <path d="M66 68 L66 162" stroke="#ffffff" strokeWidth="3" opacity={highlightOpacity} strokeLinecap="round" />
+
+            {/* Print Area */}
+            {imageDataUrl ? (
+              <image href={imageDataUrl} x="68" y="70" width="64" height="85" clipPath="url(#taza-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+            ) : (
+              <g>
+                <rect x="68" y="70" width="64" height="85" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
+                <text x="100" y="108" textAnchor="middle" fontSize="7" fill={brandingTextColor} fontFamily="sans-serif">Vista previa</text>
+                <text x="100" y="118" textAnchor="middle" fontSize="7" fill={brandingTextColor} fontFamily="sans-serif">Taza Cerámica</text>
+              </g>
+            )}
+            <clipPath id="taza-clip">
+              <rect x="68" y="70" width="64" height="85" rx="4" />
+            </clipPath>
+            <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+          </svg>
         )}
-        <clipPath id="taza-clip">
-          <rect x="68" y="70" width="64" height="85" rx="4" />
-        </clipPath>
-        <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill="#475569" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
-      </svg>
-    )}
 
-    {/* Floating label */}
-    {title && (
-      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-indigo-400 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800 whitespace-nowrap">
-        {title}
-      </span>
-    )}
-  </div>
-);
+        {/* Floating title label */}
+        {title && (
+          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-indigo-400 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800 whitespace-nowrap shadow-md">
+            {title}
+          </span>
+        )}
+      </div>
+
+      {/* Interactive Color Palette Selector */}
+      {showColorPalette && (
+        <div className="w-full bg-slate-950/70 backdrop-blur-md rounded-2xl p-3.5 border border-slate-800/80 flex flex-col items-center gap-2.5">
+          <div className="flex items-center justify-between w-full text-xs font-bold text-slate-300 px-1">
+            <span className="flex items-center gap-1.5 text-indigo-400">
+              <Palette className="w-4 h-4 text-indigo-400" />
+              Color del Producto
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800 uppercase">
+              {PRESET_COLORS.find(c => c.hex.toLowerCase() === currentColor.toLowerCase())?.name || currentColor}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-center flex-wrap gap-2 w-full">
+            {PRESET_COLORS.map(c => {
+              const isSelected = currentColor.toLowerCase() === c.hex.toLowerCase();
+              const isWhite = c.hex === '#ffffff';
+              return (
+                <button
+                  key={c.hex}
+                  type="button"
+                  title={c.name}
+                  onClick={() => handleSelectColor(c.hex)}
+                  className={`relative w-7 h-7 rounded-full cursor-pointer transition-all duration-200 flex items-center justify-center border ${
+                    isWhite ? 'border-slate-400' : 'border-slate-700/80'
+                  } ${
+                    isSelected
+                      ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-950 scale-110 shadow-lg shadow-indigo-500/30'
+                      : 'hover:scale-105 opacity-90 hover:opacity-100'
+                  }`}
+                  style={{ backgroundColor: c.hex }}
+                >
+                  {isSelected && (
+                    <Check className={`w-3.5 h-3.5 ${isWhite ? 'text-slate-900' : 'text-white'} font-bold filter drop-shadow`} />
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Custom Color Input */}
+            <div className="relative group">
+              <label
+                title="Seleccionar color personalizado"
+                className={`relative w-7 h-7 rounded-full cursor-pointer transition-all duration-200 flex items-center justify-center border border-slate-600 bg-gradient-to-tr from-pink-500 via-indigo-500 to-cyan-400 ${
+                  !PRESET_COLORS.some(c => c.hex.toLowerCase() === currentColor.toLowerCase())
+                    ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-950 scale-110 shadow-lg shadow-indigo-500/30'
+                    : 'hover:scale-105'
+                }`}
+              >
+                <input
+                  type="color"
+                  value={currentColor}
+                  onChange={e => handleSelectColor(e.target.value)}
+                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                />
+                <Palette className="w-3.5 h-3.5 text-white filter drop-shadow pointer-events-none" />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

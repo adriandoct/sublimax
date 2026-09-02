@@ -739,7 +739,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
 
                       {/* Product Mockup SVG Thumbnail */}
                       <div className="relative bg-slate-900/60 rounded-xl p-3 flex items-center justify-center min-h-[160px] border border-slate-850">
-                        <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} />
+                        <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} showColorPalette={false} />
                         <span className="absolute top-2 right-2 text-[9px] font-bold bg-slate-950/90 border border-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full capitalize">
                           {des.tipo_3d === 'vaso' ? '🥤 Vaso Vidrio' : des.tipo_3d === 'termo' ? '🧪 Termo' : des.tipo_3d === 'gorra' ? '🧢 Gorra' : des.tipo_3d === 'taza' ? '☕ Taza' : '👕 Camisa / Playera'}
                         </span>
