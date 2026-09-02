@@ -128,6 +128,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
     loadData();
   };
 
+  const handleRejectDesign = (designId: string) => {
+    Database.rejectDesign(designId);
+    loadData();
+  };
+
   // --- Metrics Aggregations ---
   const totalSales = orders.reduce((sum, o) => sum + o.total, 0);
   const totalOrders = orders.length;
@@ -153,29 +158,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
 
         {/* Tab navigation */}
         <div className="flex flex-wrap gap-2">
-          {[
-            { id: 'metrics', label: 'Dashboard', icon: BarChart3 },
-            { id: 'inventory', label: 'Inventario', icon: Package },
-            { id: 'orders', label: 'Pedidos', icon: ShoppingBag },
-            { id: 'coupons', label: 'Cupones', icon: Tag },
-            { id: 'designs', label: 'Aprobaciones', icon: Award },
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition ${
-                  activeTab === tab.id
-                    ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
-                    : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
+          {(() => {
+            const pendingDesignsCount = designs.filter(d => !d.aprobado).length;
+            return [
+              { id: 'metrics', label: 'Dashboard', icon: BarChart3, badge: 0 },
+              { id: 'inventory', label: 'Inventario', icon: Package, badge: 0 },
+              { id: 'orders', label: 'Pedidos', icon: ShoppingBag, badge: 0 },
+              { id: 'coupons', label: 'Cupones', icon: Tag, badge: 0 },
+              { id: 'designs', label: 'Aprobaciones', icon: Award, badge: pendingDesignsCount },
+            ].map(tab => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold border transition ${
+                    activeTab === tab.id
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
+                      : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                  {tab.badge > 0 && (
+                    <span className="bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full ml-1 animate-pulse">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            });
+          })()}
         </div>
       </div>
 
@@ -654,7 +667,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser }) =
                         onClick={() => handleApproveDesign(des.id)}
                         className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
                       >
-                        <Check className="w-3.5 h-3.5" /> Aprobar
+                        <Check className="w-3.5 h-3.5" /> Autorizar
+                      </button>
+                      <button
+                        onClick={() => handleRejectDesign(des.id)}
+                        className="py-1.5 px-3 bg-red-950 hover:bg-red-900 border border-red-800 text-red-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
+                      >
+                        <X className="w-3.5 h-3.5" /> Rechazar
                       </button>
                     </div>
                   </div>

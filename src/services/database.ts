@@ -422,6 +422,63 @@ export class Database {
   }
 
   /**
+   * Triggers Supabase Google OAuth sign-in if Supabase is connected.
+   */
+  static async signInWithGoogleOAuth(): Promise<{ error?: string; url?: string }> {
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) return { error: error.message };
+      return { url: data.url || undefined };
+    }
+    return { error: 'Supabase no está configurado.' };
+  }
+
+  /**
+   * Logs in or creates a user account via Google, automatically detecting
+   * and granting Designer role privileges to Google accounts.
+   */
+  static loginWithGoogle(
+    email: string = 'diseñador.google@gmail.com',
+    nombre: string = 'Diseñador Google Pro',
+    avatarUrl?: string
+  ): Usuario {
+    this.initialize();
+    const users = this.getUsers();
+    let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (!user) {
+      user = {
+        id: `google-user-${Date.now()}`,
+        email: email,
+        nombre: nombre || email.split('@')[0].toUpperCase(),
+        role: 'designer', // Automatic Designer Privileges for Google Account
+        fecha_registro: new Date().toISOString().split('T')[0],
+        avatar_url: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
+        comision_acumulada: 0
+      };
+      users.push(user);
+      localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
+    } else if (user.role !== 'admin') {
+      // Elevate or reinforce designer privileges
+      user.role = 'designer';
+      if (user.comision_acumulada === undefined) user.comision_acumulada = 0;
+      const idx = users.findIndex(u => u.id === user!.id);
+      if (idx > -1) {
+        users[idx] = user;
+        localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
+      }
+    }
+
+    localStorage.setItem('sublimax_active_user', JSON.stringify(user));
+    return user;
+  }
+
+  /**
    * Register a brand new user (designer or user role).
    * Returns the created Usuario on success, or an error string on failure.
    */

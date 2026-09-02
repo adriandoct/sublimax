@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Database, Producto, Categoria, CartItem, Usuario, Pedido } from './services/database';
+import { Database, Producto, Categoria, CartItem, Usuario, Pedido, supabaseClient } from './services/database';
 import { ThreeDesigner } from './components/ThreeDesigner';
 import { AIDesigner } from './components/AIDesigner';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -8,6 +8,7 @@ import { B2BPortal } from './components/B2BPortal';
 import { Checkout } from './components/Checkout';
 import { WhatsAppWidget } from './components/WhatsAppWidget';
 import { ARPreview } from './components/ARPreview';
+import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { 
   Sparkles, ShoppingCart, User, LogOut, Package, Star, 
   Layers, Gift, Send, Briefcase, FileText, ChevronRight, X, Info
@@ -34,6 +35,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [showArPreview, setShowArPreview] = useState(false);
+  const [isGoogleAuthOpen, setIsGoogleAuthOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -45,6 +47,21 @@ export default function App() {
     setCategories(Database.getCategories());
     setCart(Database.getCart());
     setCurrentUser(Database.getActiveUser());
+
+    // Listen for Supabase auth state change if Supabase is active
+    if (supabaseClient) {
+      const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          const googleUser = Database.loginWithGoogle(
+            session.user.email || 'diseñador.google@gmail.com',
+            session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+            session.user.user_metadata?.avatar_url
+          );
+          setCurrentUser(googleUser);
+        }
+      });
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   const handleRefreshUser = () => {
@@ -239,8 +256,12 @@ export default function App() {
             <div className="flex items-center gap-2 bg-slate-950/80 px-3.5 py-1.5 rounded-2xl border border-slate-900">
               <img src={currentUser.avatar_url} alt={currentUser.nombre} className="w-6 h-6 rounded-full border border-slate-800" />
               <div className="hidden sm:block text-left">
-                <span className="text-[10px] text-slate-300 font-bold block truncate max-w-[80px]">{currentUser.nombre}</span>
-                <span className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider">{currentUser.role}</span>
+                <span className="text-[10px] text-slate-300 font-bold block truncate max-w-[100px]">{currentUser.nombre}</span>
+                <span className={`text-[8px] block uppercase font-bold tracking-wider ${
+                  currentUser.role === 'designer' ? 'text-indigo-400' : currentUser.role === 'admin' ? 'text-red-400' : 'text-slate-500'
+                }`}>
+                  {currentUser.role === 'designer' ? '✦ Diseñador Google' : currentUser.role}
+                </span>
               </div>
               <button 
                 onClick={handleLogout}
@@ -252,6 +273,21 @@ export default function App() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              {/* Google Sign In Button */}
+              <button
+                onClick={() => setIsGoogleAuthOpen(true)}
+                className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-black shadow-lg transition flex items-center gap-2 border border-slate-200 cursor-pointer"
+                title="Iniciar sesión con Google (Rol de Diseñador)"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.37 24 12 24z"/>
+                  <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/>
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
+                </svg>
+                <span className="hidden md:inline">Google (Diseñador)</span>
+              </button>
+
               <button 
                 onClick={autoLoginAdmin}
                 className="px-3 py-1.5 bg-red-950/50 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl text-[10px] font-bold"
@@ -260,7 +296,7 @@ export default function App() {
               </button>
               
               {/* Quick Login Form inline */}
-              <form onSubmit={handleLogin} className="hidden sm:flex gap-1.5 items-center">
+              <form onSubmit={handleLogin} className="hidden lg:flex gap-1.5 items-center">
                 <input
                   type="email"
                   required
@@ -846,6 +882,18 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Google Auth Modal */}
+      <GoogleAuthModal
+        isOpen={isGoogleAuthOpen}
+        onClose={() => setIsGoogleAuthOpen(false)}
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          if (user.role === 'designer') {
+            setActiveTab('marketplace');
+          }
+        }}
+      />
 
       {/* FOOTER STATS */}
       <footer className="border-t border-slate-900/60 bg-slate-950/20 py-8 text-center text-xs text-slate-600 flex flex-col gap-2 mt-12">
