@@ -970,7 +970,16 @@ export class Database {
         ...designs[index],
         ...updates
       };
-      localStorage.setItem('sublimax_diseños', JSON.stringify(designs));
+      try {
+        localStorage.setItem('sublimax_diseños', JSON.stringify(designs));
+      } catch (e) {
+        console.warn("Quota exceeded on updateDesign, trimming old designs:", e);
+        try {
+          localStorage.setItem('sublimax_diseños', JSON.stringify(designs.slice(0, 15)));
+        } catch (err2) {
+          console.error("Failed to write updated design to localStorage:", err2);
+        }
+      }
 
       if (supabaseClient && !designId.includes('des-')) {
         supabaseClient.from('diseños')

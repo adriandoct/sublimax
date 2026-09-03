@@ -206,6 +206,43 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSuccess }) => 
   );
 };
 
+/* ── Helper: compress base64 image ── */
+const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
+  return new Promise(resolve => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) {
+      resolve(dataUrl);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 500;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      } else {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 /* ─────────────────────────────────────────────
    EDIT DESIGN MODAL
    ───────────────────────────────────────────── */
@@ -260,20 +297,37 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editTitle.trim()) return;
+  const handleSubmit = async (e?: React.SyntheticEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const titleInputEl = document.getElementById('edit-design-title-input') as HTMLInputElement | null;
+    const currentTitle = (editTitle || titleInputEl?.value || '').trim();
+
+    if (!currentTitle) {
+      alert('Por favor escribe un título para el diseño.');
+      return;
+    }
+
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const finalImage = editImageUrl.startsWith('data:image')
+        ? await compressImageIfNeeded(editImageUrl)
+        : editImageUrl;
+
       onSave({
-        titulo: editTitle,
-        precio: Number(editPrice),
+        titulo: currentTitle,
+        precio: Number(editPrice || 0),
         tipo_3d: editTipo3D,
-        imagen_url: editImageUrl,
+        imagen_url: finalImage,
         color_producto: editColor,
       });
       setIsSaving(false);
-    }, 300);
+      alert(`¡CAMBIOS GUARDADOS!\n\nEl diseño "${currentTitle}" ha sido actualizado correctamente.`);
+    } catch (err: any) {
+      console.error(err);
+      setIsSaving(false);
+      alert('Error al guardar cambios: ' + (err?.message || err));
+    }
   };
 
   return (
@@ -356,6 +410,7 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
                 Título del Diseño *
               </label>
               <input
+                id="edit-design-title-input"
                 type="text"
                 required
                 value={editTitle}
@@ -417,9 +472,10 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
                 Cancelar
               </button>
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 disabled={isSaving || !editTitle.trim()}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/40 cursor-pointer"
               >
                 {isSaving ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Guardar Cambios
