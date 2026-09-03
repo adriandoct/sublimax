@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Database, Diseño, Usuario } from '../services/database';
+import { Database, Diseño, Usuario, CartItem } from '../services/database';
 import { ProductPreview } from './ProductPreview';
 import {
   Sparkles, Upload, Check, Loader, Award, X,
   Eye, Palette, ImagePlus, UserPlus, LogIn, ShieldCheck,
   TrendingUp, DollarSign, Package, ClipboardList, CheckCircle2,
-  XCircle, Clock, Users, AlertCircle, Bell, Pencil, Trash2
+  XCircle, Clock, Users, AlertCircle, Bell, Pencil, Trash2, ShoppingCart
 } from 'lucide-react';
 
 interface DesignerMarketplaceProps {
   currentUser: Usuario | null;
   onRefreshUser: () => void;
+  onAddToCart?: (cartItem: CartItem) => void;
 }
 
 
@@ -397,6 +398,7 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
 export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   currentUser,
   onRefreshUser,
+  onAddToCart,
 }) => {
   const [designs, setDesigns] = useState<Diseño[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -420,6 +422,30 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   const isAdmin = currentUser?.role === 'admin';
 
   const [editingDesign, setEditingDesign] = useState<Diseño | null>(null);
+
+  const handleOrderDesign = (des: { id: string; titulo: string; imagen_url: string; precio: number; tipo_3d?: string; color_producto?: string }) => {
+    const productTypeLabel = des.tipo_3d === 'vaso' ? 'Vaso Vidrio' : des.tipo_3d === 'termo' ? 'Termo Acero' : des.tipo_3d === 'gorra' ? 'Gorra Trucker' : des.tipo_3d === 'taza' ? 'Taza Cerámica' : 'Playera';
+    const basePrice = des.precio > 0 ? des.precio + 150 : 190;
+    const cartItem: CartItem = {
+      id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      producto_id: des.id,
+      producto_nombre: `${des.titulo} (${productTypeLabel})`,
+      producto_imagen: des.imagen_url,
+      tipo_3d: des.tipo_3d || 'playera',
+      precio_unitario: basePrice,
+      cantidad: 1,
+      color: des.color_producto || '#ffffff',
+      diseño_personalizado: { image: des.imagen_url }
+    };
+
+    if (onAddToCart) {
+      onAddToCart(cartItem);
+    } else {
+      Database.addToCart(cartItem);
+    }
+    setSuccessMsg(`¡"${des.titulo}" fue añadido a tu carrito de compras!`);
+    setTimeout(() => setSuccessMsg(''), 5000);
+  };
 
   const loadDesigns = () => {
     if (!currentUser) return;
@@ -1075,8 +1101,17 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                       </span>
                     </div>
 
+                    {/* Order to Cart Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleOrderDesign(des)}
+                      className="w-full py-2 px-3 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-indigo-950/40 cursor-pointer mt-2"
+                    >
+                      <ShoppingCart className="w-3.5 h-3.5" /> Hacer Pedido / Añadir al Carrito
+                    </button>
+
                     {/* Action buttons */}
-                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-900">
+                    <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-900">
                       <button
                         type="button"
                         onClick={() => setEditingDesign(des)}

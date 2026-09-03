@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Database, CartItem, Cupon, Pedido } from '../services/database';
-import { CreditCard, ShieldCheck, Ticket, Award, RefreshCw, CheckCircle, Printer, ArrowRight } from 'lucide-react';
+import { CreditCard, ShieldCheck, Ticket, Award, RefreshCw, CheckCircle, Printer, ArrowRight, Copy, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface CheckoutProps {
@@ -12,6 +12,7 @@ interface CheckoutProps {
 
 export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPlaced, onClearCart }) => {
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal' | 'mercadopago' | 'oxxo'>('stripe');
+  const [copiedMp, setCopiedMp] = useState(false);
   
   // Coupon states
   const [couponCode, setCouponCode] = useState('');
@@ -354,13 +355,65 @@ export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPl
               </>
             )}
             {paymentMethod === 'mercadopago' && (
-              <>
-                <span className="text-4xl">💙</span>
-                <h4 className="text-sm font-bold text-white">Integración Mercado Pago Developers</h4>
-                <p className="text-slate-400 text-xs max-w-xs">
-                  Procesa de forma inmediata con tarjetas de débito o dinero en cuenta Mercado Pago.
-                </p>
-              </>
+              <div className="w-full flex flex-col items-center gap-5 text-left">
+                <div className="flex items-center gap-3 w-full border-b border-slate-800 pb-3">
+                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-extrabold text-lg">
+                    💙
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Transferencia Directa Mercado Pago</h4>
+                    <p className="text-slate-400 text-xs">Transfiere desde tu banca móvil o app de Mercado Pago</p>
+                  </div>
+                </div>
+
+                {/* Digital Mercado Pago Card Graphic */}
+                <div className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 p-5 text-white shadow-xl flex flex-col gap-4 border border-cyan-400/30 relative overflow-hidden">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-100">Mercado Pago — Tarjeta de Depósito</span>
+                    <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white">SPEI / Débito</span>
+                  </div>
+
+                  <div>
+                    <span className="text-[9px] uppercase tracking-wider text-cyan-200 block mb-1">Número de Tarjeta Mercado Pago</span>
+                    <div className="font-mono text-lg font-bold tracking-wider flex items-center justify-between bg-black/25 p-2.5 rounded-xl border border-white/10">
+                      <span>4312 5700 1824 6147</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText('4312570018246147');
+                          setCopiedMp(true);
+                          setTimeout(() => setCopiedMp(false), 3000);
+                        }}
+                        className="px-3 py-1 bg-white text-slate-900 hover:bg-cyan-100 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedMp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-700" />}
+                        {copiedMp ? '¡Copiado!' : 'Copiar'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-white/10">
+                    <div>
+                      <span className="text-[8px] uppercase tracking-wider text-cyan-200 block">Beneficiario</span>
+                      <span className="font-semibold block truncate">SUBLIMAX Studio</span>
+                    </div>
+                    <div>
+                      <span className="text-[8px] uppercase tracking-wider text-cyan-200 block">Banco</span>
+                      <span className="font-semibold block">Mercado Pago / STP</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step instructions */}
+                <div className="w-full bg-slate-950/60 rounded-2xl p-4 border border-slate-850 text-xs text-slate-300 flex flex-col gap-2">
+                  <span className="font-bold text-slate-200 block">Pasos para realizar la transferencia:</span>
+                  <ol className="list-decimal list-inside space-y-1.5 text-slate-400 text-[11px]">
+                    <li>Abre la app de tu banco (BBVA, Banamex, Nu, Banorte) o Mercado Pago.</li>
+                    <li>Transfiere a la tarjeta <strong className="text-cyan-300">4312 5700 1824 6147</strong> el total de <strong className="text-white">${finalTotal.toFixed(2)} MXN</strong>.</li>
+                    <li>Haz clic abajo en <strong className="text-indigo-400">"Procesar Orden de Compra"</strong> para registrar tu pedido.</li>
+                  </ol>
+                </div>
+              </div>
             )}
             {paymentMethod === 'oxxo' && (
               <>

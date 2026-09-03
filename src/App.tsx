@@ -633,7 +633,7 @@ export default function App() {
 
         {/* TAB 4: CREATOR MARKETPLACE */}
         {activeTab === 'marketplace' && (
-          <DesignerMarketplace currentUser={currentUser} onRefreshUser={handleRefreshUser} />
+          <DesignerMarketplace currentUser={currentUser} onRefreshUser={handleRefreshUser} onAddToCart={handleAddToCart} />
         )}
 
         {/* TAB 5: REWARDS WALLET PAGE */}
