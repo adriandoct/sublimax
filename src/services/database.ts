@@ -650,17 +650,10 @@ export class Database {
     } catch (e) {
       console.warn("localStorage quota exceeded on cart, pruning heavy image data:", e);
       try {
-        // Keep last 8 items and prune old designs if storage is full
-        const pruned = cart.slice(-8);
+        const pruned = cart.slice(-5);
         localStorage.setItem('sublimax_carrito', JSON.stringify(pruned));
       } catch (err2) {
-        try {
-          // Clear old designs cache to free up browser storage quota
-          localStorage.removeItem('sublimax_diseños');
-          localStorage.setItem('sublimax_carrito', JSON.stringify(cart.slice(-4)));
-        } catch (err3) {
-          console.error("Critical storage error:", err3);
-        }
+        console.error("Critical storage error on saveCart:", err2);
       }
     }
   }
@@ -910,7 +903,22 @@ export class Database {
         }
       });
     }
-    return JSON.parse(localStorage.getItem('sublimax_diseños') || '[]');
+    const raw = localStorage.getItem('sublimax_diseños');
+    if (!raw) {
+      localStorage.setItem('sublimax_diseños', JSON.stringify(DEFAULT_DESIGNS));
+      return DEFAULT_DESIGNS;
+    }
+    try {
+      const parsed: Diseño[] = JSON.parse(raw);
+      if (parsed.length === 0) {
+        localStorage.setItem('sublimax_diseños', JSON.stringify(DEFAULT_DESIGNS));
+        return DEFAULT_DESIGNS;
+      }
+      return parsed;
+    } catch (err) {
+      localStorage.setItem('sublimax_diseños', JSON.stringify(DEFAULT_DESIGNS));
+      return DEFAULT_DESIGNS;
+    }
   }
 
   static uploadDesign(design: Omit<Diseño, 'id' | 'ventas' | 'aprobado'>): Diseño {
