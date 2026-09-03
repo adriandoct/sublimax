@@ -48,10 +48,12 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
   const [addedToCartSuccess, setAddedToCartSuccess] = useState(false);
   const [deliveryDays, setDeliveryDays] = useState(3);
 
-  // Price state
+  // Price & Quantity state
+  const [quantity, setQuantity] = useState(1);
   const basePrice = producto.precio_base;
   const personalizationCost = (customText ? 15 : 0) + (uploadedImage ? 30 : 0) + (activeStickers.length * 10);
-  const totalPrice = basePrice + personalizationCost;
+  const unitPrice = basePrice + personalizationCost;
+  const totalOrderPrice = unitPrice * quantity;
 
   // Refs for Three.js objects
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -536,8 +538,8 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
       producto_nombre: producto.nombre,
       producto_imagen: producto.imagen_url,
       tipo_3d: producto.tipo_3d,
-      precio_unitario: totalPrice,
-      cantidad: 1,
+      precio_unitario: unitPrice,
+      cantidad: quantity,
       color: baseColor,
       diseño_personalizado: {
         image: uploadedImage || undefined,
@@ -824,11 +826,40 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
 
           {/* Pricing & Add to Cart */}
           <div className="mt-8 border-t border-slate-850 pt-6 flex flex-col gap-4">
+            
+            {/* Quantity Selector */}
+            <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-850">
+              <span className="text-xs font-bold text-slate-300">Cantidad (Piezas):</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                  className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center transition active:scale-95 cursor-pointer"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-16 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-center text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setQuantity(q => q + 1)}
+                  className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center transition active:scale-95 cursor-pointer"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             <div className="flex justify-between items-center">
               <div>
-                <span className="text-slate-400 text-xs block">Precio Total Estimado</span>
+                <span className="text-slate-400 text-xs block">Total a Pagar ({quantity} pza{quantity > 1 ? 's' : ''})</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-white">${totalPrice.toFixed(2)}</span>
+                  <span className="text-3xl font-extrabold text-emerald-400">${totalOrderPrice.toFixed(2)}</span>
                   <span className="text-xs text-slate-500">MXN</span>
                 </div>
               </div>
@@ -854,7 +885,7 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
                 </>
               ) : (
                 <>
-                  <ShoppingCart className="w-5 h-5" /> Agregar al Carrito
+                  <ShoppingCart className="w-5 h-5" /> Agregar al Carrito (${totalOrderPrice.toFixed(2)} MXN)
                 </>
               )}
             </button>

@@ -219,11 +219,27 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
   const [editTitle, setEditTitle] = useState(design.titulo);
   const [editPrice, setEditPrice] = useState(design.precio);
   const [editTipo3D, setEditTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>(design.tipo_3d || 'playera');
+  const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editColor, setEditColor] = useState<string>(design.color_producto || '#ffffff');
   const [editImageUrl, setEditImageUrl] = useState<string>(design.imagen_url);
   const [editFileName, setEditFileName] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const editFileInputRef = useRef<HTMLInputElement>(null);
+
+  const getBasePrice = (type?: string) => {
+    switch (type) {
+      case 'vaso': return 190;
+      case 'termo': return 220;
+      case 'gorra': return 150;
+      case 'taza': return 120;
+      case 'playera':
+      default: return 250;
+    }
+  };
+
+  const basePrice = getBasePrice(editTipo3D);
+  const unitPrice = basePrice + Number(editPrice || 0);
+  const totalOrderToPay = unitPrice * editQuantity;
 
   const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -362,6 +378,36 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
               />
             </div>
 
+            <div>
+              <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                Cantidad de Productos (Piezas) *
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditQuantity(q => Math.max(1, q - 1))}
+                  className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-base flex items-center justify-center transition active:scale-95 cursor-pointer"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={editQuantity}
+                  onChange={e => setEditQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-20 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-center text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditQuantity(q => q + 1)}
+                  className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-base flex items-center justify-center transition active:scale-95 cursor-pointer"
+                >
+                  +
+                </button>
+                <span className="text-xs text-slate-400 font-semibold ml-2">piezas</span>
+              </div>
+            </div>
+
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
@@ -381,10 +427,30 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
             </div>
           </form>
 
-          {/* Live Preview Panel */}
-          <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-850 flex flex-col items-center gap-3">
-            <span className="text-xs font-bold text-slate-300">Vista Previa Actualizada</span>
+          {/* Live Preview Panel & Total Summary Card */}
+          <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-850 flex flex-col items-center gap-4">
+            <span className="text-xs font-bold text-slate-300">Vista Previa y Resumen de Orden</span>
             <ProductPreview imageDataUrl={editImageUrl} title={editTitle || 'Vista previa'} tipo3D={editTipo3D} productColor={editColor} onColorChange={setEditColor} showColorPalette={true} />
+
+            {/* Total Price Breakdown */}
+            <div className="w-full bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col gap-2 text-xs shadow-inner">
+              <div className="flex justify-between items-center text-slate-400">
+                <span>Producto Base ({editTipo3D.toUpperCase()}):</span>
+                <span className="font-semibold text-slate-200">${basePrice.toFixed(2)} MXN</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-400">
+                <span>Licencia / Regalía:</span>
+                <span className="font-semibold text-slate-200">${Number(editPrice || 0).toFixed(2)} MXN</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-400">
+                <span>Cantidad:</span>
+                <span className="font-bold text-indigo-400">{editQuantity} pieza(s)</span>
+              </div>
+              <div className="flex justify-between items-center pt-2.5 mt-1 border-t border-slate-800">
+                <span className="text-white font-bold">TOTAL A PAGAR:</span>
+                <span className="text-emerald-400 text-base font-extrabold">${totalOrderToPay.toFixed(2)} MXN</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -404,6 +470,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [tipo3D, setTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>('playera');
   const [productColor, setProductColor] = useState<string>('#ffffff');
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
@@ -957,7 +1024,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
 
               {/* Price */}
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
                   Precio Licencia / Regalía ($ MXN)
                 </label>
                 <input
@@ -972,6 +1039,37 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                 <span className="text-[10px] text-slate-600 mt-1 block">
                   Establece $0 para uso libre en la plataforma.
                 </span>
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                  Cantidad de Productos (Piezas) *
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-base flex items-center justify-center transition active:scale-95 cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-20 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-center text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(q => q + 1)}
+                    className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold text-base flex items-center justify-center transition active:scale-95 cursor-pointer"
+                  >
+                    +
+                  </button>
+                  <span className="text-xs text-slate-400 font-semibold ml-2">piezas</span>
+                </div>
               </div>
 
               <button
@@ -1007,6 +1105,30 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
             </div>
 
             <ProductPreview imageDataUrl={imageDataUrl} title={title || 'Tu diseño aquí'} tipo3D={tipo3D} productColor={productColor} onColorChange={setProductColor} showColorPalette={true} />
+
+            {/* Total Price Calculation Box */}
+            <div className="w-full bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col gap-2 text-xs shadow-inner">
+              <div className="flex justify-between items-center text-slate-400">
+                <span>Producto Base ({tipo3D.toUpperCase()}):</span>
+                <span className="font-semibold text-slate-200">
+                  ${(tipo3D === 'vaso' ? 190 : tipo3D === 'termo' ? 220 : tipo3D === 'gorra' ? 150 : tipo3D === 'taza' ? 120 : 250).toFixed(2)} MXN
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-slate-400">
+                <span>Licencia / Regalía:</span>
+                <span className="font-semibold text-slate-200">${Number(price || 0).toFixed(2)} MXN</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-400">
+                <span>Cantidad Solicitada:</span>
+                <span className="font-bold text-indigo-400">{quantity} pieza(s)</span>
+              </div>
+              <div className="flex justify-between items-center pt-2.5 mt-1 border-t border-slate-800">
+                <span className="text-white font-bold">TOTAL A PAGAR ESTIMADO:</span>
+                <span className="text-emerald-400 text-base font-extrabold">
+                  ${(((tipo3D === 'vaso' ? 190 : tipo3D === 'termo' ? 220 : tipo3D === 'gorra' ? 150 : tipo3D === 'taza' ? 120 : 250) + Number(price || 0)) * quantity).toFixed(2)} MXN
+                </span>
+              </div>
+            </div>
 
             <div className="w-full bg-slate-950/60 rounded-2xl p-4 border border-slate-900 text-center">
               <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">
