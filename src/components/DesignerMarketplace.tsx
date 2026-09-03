@@ -206,7 +206,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSuccess }) => 
   );
 };
 
-/* ── Helper: compress base64 image ── */
+/* ── Helper: compress base64 image while preserving 100% PNG transparency ── */
 const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
   return new Promise(resolve => {
     if (!dataUrl || !dataUrl.startsWith('data:image')) {
@@ -216,7 +216,7 @@ const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 500;
+      const maxDim = 600;
       let w = img.width;
       let h = img.height;
       if (w > maxDim || h > maxDim) {
@@ -232,8 +232,10 @@ const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       if (ctx) {
+        ctx.clearRect(0, 0, w, h); // Clear canvas transparently
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
+        // ALWAYS export as image/png to preserve 100% PNG alpha transparency!
+        resolve(canvas.toDataURL('image/png'));
       } else {
         resolve(dataUrl);
       }
@@ -668,44 +670,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
       ctx.font = '15px sans-serif';
       ctx.fillText(`Diseño Personalizado Sublimax`, 200, 220);
     }
-    return canvas.toDataURL();
-  };
-
-  /* ── Helper: compress base64 image ── */
-  const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
-    return new Promise(resolve => {
-      if (!dataUrl || !dataUrl.startsWith('data:image')) {
-        resolve(dataUrl);
-        return;
-      }
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 500;
-        let w = img.width;
-        let h = img.height;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) {
-            h = Math.round((h * maxDim) / w);
-            w = maxDim;
-          } else {
-            w = Math.round((w * maxDim) / h);
-            h = maxDim;
-          }
-        }
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.82));
-        } else {
-          resolve(dataUrl);
-        }
-      };
-      img.onerror = () => resolve(dataUrl);
-      img.src = dataUrl;
-    });
+    return canvas.toDataURL('image/png');
   };
 
   /* ── Upload design ── */
