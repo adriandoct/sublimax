@@ -216,7 +216,7 @@ const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 600;
+      const maxDim = 400;
       let w = img.width;
       let h = img.height;
       if (w > maxDim || h > maxDim) {

@@ -645,7 +645,24 @@ export class Database {
   }
 
   static saveCart(cart: CartItem[]) {
-    localStorage.setItem('sublimax_carrito', JSON.stringify(cart));
+    try {
+      localStorage.setItem('sublimax_carrito', JSON.stringify(cart));
+    } catch (e) {
+      console.warn("localStorage quota exceeded on cart, pruning heavy image data:", e);
+      try {
+        // Keep last 8 items and prune old designs if storage is full
+        const pruned = cart.slice(-8);
+        localStorage.setItem('sublimax_carrito', JSON.stringify(pruned));
+      } catch (err2) {
+        try {
+          // Clear old designs cache to free up browser storage quota
+          localStorage.removeItem('sublimax_diseños');
+          localStorage.setItem('sublimax_carrito', JSON.stringify(cart.slice(-4)));
+        } catch (err3) {
+          console.error("Critical storage error:", err3);
+        }
+      }
+    }
   }
 
   static addToCart(item: CartItem) {
