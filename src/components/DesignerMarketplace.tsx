@@ -588,16 +588,40 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     handleFileChange(fakeEvent);
   };
 
+  /* ── Helper: generate default design canvas ── */
+  const generateDefaultDesignImage = (titleText: string, productType: string) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const gradient = ctx.createLinearGradient(0, 0, 400, 400);
+      gradient.addColorStop(0, '#1e1b4b');
+      gradient.addColorStop(1, '#312e81');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 400, 400);
+      ctx.fillStyle = '#818cf8';
+      ctx.font = 'bold 26px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(titleText.toUpperCase(), 200, 180);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '15px sans-serif';
+      ctx.fillText(`Diseño Personalizado Sublimax`, 200, 220);
+    }
+    return canvas.toDataURL();
+  };
+
   /* ── Upload design ── */
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !imageDataUrl) {
-      alert('Por favor agrega un título y selecciona una imagen para tu diseño.');
+    if (!title.trim()) {
+      alert('Por favor escribe un título para tu diseño.');
       return;
     }
 
     setIsUploading(true);
 
+    const finalImageUrl = imageDataUrl || generateDefaultDesignImage(title, tipo3D);
     const designerId = currentUser?.id || 'guest-designer';
     const designerName = currentUser?.nombre || 'Invitado';
 
@@ -606,7 +630,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         usuario_id: designerId,
         nombre_diseñador: designerName,
         titulo: title,
-        imagen_url: imageDataUrl,
+        imagen_url: finalImageUrl,
         precio: Number(price),
         tipo_3d: tipo3D,
         color_producto: productColor,
@@ -620,12 +644,12 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         producto_id: newDesign.id,
         producto_nombre: `${title} (${productTypeLabel})`,
-        producto_imagen: imageDataUrl,
+        producto_imagen: finalImageUrl,
         tipo_3d: tipo3D,
         precio_unitario: basePrice,
         cantidad: quantity || 1,
         color: productColor || '#ffffff',
-        diseño_personalizado: { image: imageDataUrl }
+        diseño_personalizado: { image: finalImageUrl }
       };
 
       if (onAddToCart) {
@@ -634,16 +658,17 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         Database.addToCart(cartItem);
       }
 
+      const savedTitle = title;
       setTitle('');
       setPrice(0);
       setQuantity(1);
       setImageDataUrl(null);
       setImageFileName('');
       setIsUploading(false);
-      setSuccessMsg('¡Diseño guardado y añadido a tu carrito al instante!');
+      setSuccessMsg(`¡"${savedTitle}" enviado a revisión y añadido a tu carrito (${quantity} pza${quantity > 1 ? 's' : ''})!`);
       loadDesigns();
       setActiveView('portfolio');
-      setTimeout(() => setSuccessMsg(''), 5000);
+      setTimeout(() => setSuccessMsg(''), 6000);
     } catch (err) {
       console.error(err);
       setIsUploading(false);
@@ -1108,8 +1133,8 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
               <button
                 id="submit-design-btn"
                 type="submit"
-                disabled={isUploading || !title.trim() || !imageDataUrl}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-950/40"
+                disabled={isUploading || !title.trim()}
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-950/40 cursor-pointer"
               >
                 {isUploading ? (
                   <><Loader className="w-4 h-4 animate-spin" /> Subiendo diseño...</>
