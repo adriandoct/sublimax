@@ -262,25 +262,25 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
 
     } else if (producto.tipo_3d === 'vaso') {
       // Clear Glass Tumbler Can (Vaso de Vidrio con Tapa de Bambú y Sorbete de Cristal)
-      // 1. Transparent Glass Body with Sublimation Print
+      // 1. Transparent Crystal Glass Body with Sublimation Print
       const glassMat = new THREE.MeshStandardMaterial({
         map: texture,
         transparent: true,
-        opacity: 0.88,
-        roughness: 0.1,
-        metalness: 0.05,
+        opacity: 0.58,
+        roughness: 0.05,
+        metalness: 0.1,
         side: THREE.DoubleSide
       });
       geometry = new THREE.CylinderGeometry(1.0, 1.0, 2.7, 32, 1, true);
       const glassBody = new THREE.Mesh(geometry, glassMat);
       group.add(glassBody);
 
-      // 2. Glass Base & Top Rim (thick glass effect)
+      // 2. Glass Base & Top Rim (thick crystal glass refraction effect)
       const glassRimMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
+        color: 0xe0f2fe,
         transparent: true,
-        opacity: 0.45,
-        roughness: 0.05
+        opacity: 0.35,
+        roughness: 0.02
       });
 
       const bottomGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.08, 32);

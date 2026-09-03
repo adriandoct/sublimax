@@ -135,30 +135,81 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
         {tipo3D === 'vaso' && (
           <svg viewBox="0 0 200 220" className="w-full max-w-[260px] filter drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-            {/* Glass Straw */}
-            <line x1="108" y1="12" x2="102" y2="40" stroke="#cbd5e1" strokeWidth="4.5" strokeLinecap="round" opacity="0.9" />
-            {/* Bamboo Lid */}
-            <rect x="65" y="32" width="70" height="14" rx="4" fill="#d97706" stroke="#92400e" strokeWidth="1.5" />
-            <line x1="68" y1="39" x2="132" y2="39" stroke="#b45309" strokeWidth="1" strokeDasharray="6 3" />
-            
-            {/* Glass Can Body */}
-            <rect x="67" y="46" width="66" height="145" rx="14" fill={currentColor} fillOpacity={isLight ? 0.35 : 0.6} stroke={strokeColor} strokeWidth="1.5" />
-            <path d="M72 52 L72 184" stroke="#ffffff" strokeWidth="2.5" opacity={highlightOpacity} strokeLinecap="round" />
+            <defs>
+              {/* Glass Body Light & Reflection Gradients */}
+              <linearGradient id="glass-body-tint" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+                <stop offset="12%" stopColor="#bae6fd" stopOpacity="0.2" />
+                <stop offset="35%" stopColor="#ffffff" stopOpacity="0.05" />
+                <stop offset="65%" stopColor="#ffffff" stopOpacity="0.05" />
+                <stop offset="88%" stopColor="#bae6fd" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0.4" />
+              </linearGradient>
 
-            {/* Print Area */}
+              <linearGradient id="glass-glare-vertical" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
+                <stop offset="30%" stopColor="#ffffff" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
+              </linearGradient>
+
+              <linearGradient id="bamboo-wood" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#eab308" />
+                <stop offset="50%" stopColor="#ca8a04" />
+                <stop offset="100%" stopColor="#854d0e" />
+              </linearGradient>
+
+              <linearGradient id="glass-straw-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="#e0f2fe" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.7" />
+              </linearGradient>
+            </defs>
+
+            {/* Glass Straw */}
+            <path d="M107 10 L107 24 Q107 34 102 44" fill="none" stroke="url(#glass-straw-grad)" strokeWidth="5" strokeLinecap="round" opacity="0.95" />
+            <path d="M108 10 L108 24 Q108 34 103 44" fill="none" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+
+            {/* Bamboo Lid */}
+            <g id="bamboo-lid-group">
+              <rect x="67" y="44" width="66" height="5" rx="2" fill="#94a3b8" opacity="0.6" />
+              <rect x="64" y="30" width="72" height="15" rx="4" fill="url(#bamboo-wood)" stroke="#713f12" strokeWidth="1.2" />
+              <line x1="66" y1="35" x2="134" y2="35" stroke="#fef08a" strokeWidth="1" opacity="0.4" strokeDasharray="8 4 12 3" />
+              <line x1="66" y1="40" x2="134" y2="40" stroke="#713f12" strokeWidth="0.8" opacity="0.5" strokeDasharray="14 3 6 4" />
+              <ellipse cx="106" cy="30" rx="6" ry="2.5" fill="#713f12" opacity="0.7" />
+              <ellipse cx="106" cy="30" rx="4.5" ry="1.8" fill="#422006" />
+            </g>
+
+            {/* Glass Can Body - Transparent Crystal Glass */}
+            <rect x="67" y="46" width="66" height="145" rx="14" fill="url(#glass-body-tint)" stroke="#cbd5e1" strokeWidth="1.8" />
+
+            {/* Thick Glass Bottom Base */}
+            <path d="M67 176 Q67 191 81 191 L119 191 Q133 191 133 176 Z" fill="#e0f2fe" fillOpacity="0.25" stroke="#94a3b8" strokeWidth="1.2" />
+            <ellipse cx="100" cy="186" rx="28" ry="4" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
+
+            {/* Glass Refraction Glare Highlights */}
+            <path d="M71 52 L71 180" stroke="url(#glass-glare-vertical)" strokeWidth="3" strokeLinecap="round" opacity="0.9" />
+            <path d="M75 54 L75 178" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+            <path d="M129 52 L129 180" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+
+            {/* Sublimation Print Layer inside Glass */}
             {imageDataUrl ? (
-              <image href={imageDataUrl} x={vasoImg.x} y={vasoImg.y} width={vasoImg.w} height={vasoImg.h} clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+              <g>
+                <image href={imageDataUrl} x={vasoImg.x} y={vasoImg.y} width={vasoImg.w} height={vasoImg.h} clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" opacity="0.92" />
+                <rect x="67" y="46" width="66" height="145" rx="14" fill="url(#glass-body-tint)" pointerEvents="none" opacity="0.5" />
+              </g>
             ) : (
               <g>
-                <rect x="70" y="60" width="60" height="115" rx="6" fill={isLight ? '#f1f5f9' : '#0f172a'} fillOpacity="0.8" stroke="#38bdf8" strokeDasharray="4 3" />
-                <text x="100" y="115" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vista previa</text>
-                <text x="100" y="125" textAnchor="middle" fontSize="7" fill="#38bdf8" fontFamily="sans-serif">Vaso de Vidrio</text>
+                <rect x="70" y="60" width="60" height="115" rx="6" fill="#f0f9ff" fillOpacity="0.3" stroke="#38bdf8" strokeDasharray="4 3" />
+                <text x="100" y="113" textAnchor="middle" fontSize="7.5" fontWeight="bold" fill="#0284c7" fontFamily="sans-serif">Vista Previa</text>
+                <text x="100" y="124" textAnchor="middle" fontSize="6.5" fill="#0369a1" fontFamily="sans-serif">Vaso Cristal Transparente</text>
               </g>
             )}
+
             <clipPath id="vaso-clip">
               <rect x="67" y="46" width="66" height="145" rx="14" />
             </clipPath>
-            <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} opacity="0.8" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
+
+            <text x="100" y="186" textAnchor="middle" fontSize="5.5" fill="#475569" opacity="0.85" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
           </svg>
         )}
 
