@@ -11,7 +11,7 @@ interface CheckoutProps {
 }
 
 export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPlaced, onClearCart }) => {
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal' | 'mercadopago' | 'oxxo'>('stripe');
+  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'stripe' | 'paypal' | 'oxxo'>('mercadopago');
   const [copiedMp, setCopiedMp] = useState(false);
   
   // Coupon states
@@ -203,25 +203,31 @@ export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPl
         
         {/* Payment selector */}
         <div className="glass-panel rounded-3xl p-6 border-slate-800">
-          <h3 className="text-sm font-semibold text-slate-200 mb-4 uppercase tracking-wider">Elige tu método de pago</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Método de pago activo</h3>
+            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Mercado Pago Activo
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             {[
-              { id: 'stripe', name: 'Stripe', logo: '💳' },
-              { id: 'mercadopago', name: 'Mercado Pago', logo: '💙' },
-              { id: 'paypal', name: 'PayPal', logo: '🅿️' },
-              { id: 'oxxo', name: 'OXXO Pay', logo: '🏪' },
+              { id: 'mercadopago', name: 'Mercado Pago (Transferencia)', logo: '💙', active: true },
+              { id: 'stripe', name: 'Tarjeta (Stripe)', logo: '💳', active: false },
+              { id: 'paypal', name: 'PayPal', logo: '🅿️', active: false },
+              { id: 'oxxo', name: 'OXXO Pay', logo: '🏪', active: false },
             ].map(method => (
               <button
                 key={method.id}
                 onClick={() => setPaymentMethod(method.id as any)}
-                className={`py-3.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-2 transition ${
+                className={`py-3.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition ${
                   paymentMethod === method.id 
-                    ? 'bg-indigo-900/40 border-indigo-500 text-indigo-200' 
-                    : 'bg-slate-950/60 border-slate-850 text-slate-400 hover:border-slate-800'
+                    ? 'bg-cyan-950/60 border-cyan-500 text-cyan-200 shadow-lg shadow-cyan-950/50' 
+                    : 'bg-slate-950/40 border-slate-850/60 text-slate-500 hover:border-slate-800'
                 }`}
               >
                 <span className="text-xl">{method.logo}</span>
-                <span>{method.name}</span>
+                <span className="text-[11px] text-center leading-tight">{method.name}</span>
               </button>
             ))}
           </div>
