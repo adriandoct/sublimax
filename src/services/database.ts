@@ -44,6 +44,7 @@ export interface Diseño {
   imagen_url: string;
   precio: number;
   tipo_3d?: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza';
+  color_producto?: string;
   categoria_id?: string;
   ventas: number;
   aprobado: boolean;
@@ -915,6 +916,7 @@ export class Database {
         imagen_url: design.imagen_url,
         precio: design.precio,
         tipo_3d: design.tipo_3d || 'playera',
+        color_producto: design.color_producto || '#ffffff',
         aprobado: false
       }).then(({ error }) => { if (error) console.error("Error uploading design to Supabase:", error); });
     }

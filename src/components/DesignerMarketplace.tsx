@@ -211,13 +211,14 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSuccess }) => 
 interface EditDesignModalProps {
   design: Diseño;
   onClose: () => void;
-  onSave: (updated: { titulo: string; precio: number; tipo_3d: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'; imagen_url: string }) => void;
+  onSave: (updated: { titulo: string; precio: number; tipo_3d: 'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'; imagen_url: string; color_producto?: string }) => void;
 }
 
 const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSave }) => {
   const [editTitle, setEditTitle] = useState(design.titulo);
   const [editPrice, setEditPrice] = useState(design.precio);
   const [editTipo3D, setEditTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>(design.tipo_3d || 'playera');
+  const [editColor, setEditColor] = useState<string>(design.color_producto || '#ffffff');
   const [editImageUrl, setEditImageUrl] = useState<string>(design.imagen_url);
   const [editFileName, setEditFileName] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
@@ -252,6 +253,7 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
         precio: Number(editPrice),
         tipo_3d: editTipo3D,
         imagen_url: editImageUrl,
+        color_producto: editColor,
       });
       setIsSaving(false);
     }, 300);
@@ -381,7 +383,7 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
           {/* Live Preview Panel */}
           <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-850 flex flex-col items-center gap-3">
             <span className="text-xs font-bold text-slate-300">Vista Previa Actualizada</span>
-            <ProductPreview imageDataUrl={editImageUrl} title={editTitle || 'Vista previa'} tipo3D={editTipo3D} showColorPalette={true} />
+            <ProductPreview imageDataUrl={editImageUrl} title={editTitle || 'Vista previa'} tipo3D={editTipo3D} productColor={editColor} onColorChange={setEditColor} showColorPalette={true} />
           </div>
         </div>
       </div>
@@ -401,6 +403,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState(0);
   const [tipo3D, setTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>('playera');
+  const [productColor, setProductColor] = useState<string>('#ffffff');
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageFileName, setImageFileName] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -506,6 +509,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         imagen_url: imageDataUrl,
         precio: Number(price),
         tipo_3d: tipo3D,
+        color_producto: productColor,
       });
 
       setTitle('');
@@ -976,7 +980,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
               </p>
             </div>
 
-            <ProductPreview imageDataUrl={imageDataUrl} title={title || 'Tu diseño aquí'} tipo3D={tipo3D} />
+            <ProductPreview imageDataUrl={imageDataUrl} title={title || 'Tu diseño aquí'} tipo3D={tipo3D} productColor={productColor} onColorChange={setProductColor} showColorPalette={true} />
 
             <div className="w-full bg-slate-950/60 rounded-2xl p-4 border border-slate-900 text-center">
               <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">
@@ -1052,7 +1056,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
 
                   {/* Thumbnail */}
                   <div className="relative bg-slate-900/40 p-4 flex items-center justify-center min-h-[160px]">
-                    <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} showColorPalette={false} />
+                    <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} productColor={des.color_producto || '#ffffff'} showColorPalette={false} />
                     <span className="absolute top-2 right-2 text-[9px] font-bold bg-slate-900/80 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-full capitalize">
                       {des.tipo_3d === 'vaso' ? '🥤 Vaso Vidrio' : des.tipo_3d === 'termo' ? '🧪 Termo' : des.tipo_3d === 'gorra' ? '🧢 Gorra' : des.tipo_3d === 'taza' ? '☕ Taza' : '👕 Playera'}
                     </span>
@@ -1228,7 +1232,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
 
                           {/* Product thumbnail */}
                           <div className="relative bg-slate-900/40 p-3 flex items-center justify-center min-h-[140px]">
-                            <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} showColorPalette={false} />
+                            <ProductPreview imageDataUrl={des.imagen_url} title="" tipo3D={des.tipo_3d || 'playera'} productColor={des.color_producto || '#ffffff'} showColorPalette={false} />
                             <span className="absolute top-2 right-2 text-[9px] font-bold bg-slate-900/80 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-full capitalize">
                               {des.tipo_3d === 'vaso' ? '🥤 Vaso Vidrio' : des.tipo_3d === 'termo' ? '🧪 Termo' : des.tipo_3d === 'gorra' ? '🧢 Gorra' : des.tipo_3d === 'taza' ? '☕ Taza' : '👕 Playera'}
                             </span>
@@ -1328,7 +1332,7 @@ const PublicDesignsGrid: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {publicDesigns.map(d => (
           <div key={d.id} className="glass-panel rounded-2xl p-3 border-slate-850 flex flex-col items-center gap-2">
-            <ProductPreview imageDataUrl={d.imagen_url} title="" tipo3D={d.tipo_3d || 'playera'} showColorPalette={false} />
+            <ProductPreview imageDataUrl={d.imagen_url} title="" tipo3D={d.tipo_3d || 'playera'} productColor={d.color_producto || '#ffffff'} showColorPalette={false} />
             <span className="text-xs font-bold text-white truncate w-full text-center">{d.titulo}</span>
             <span className="text-[10px] text-indigo-400">por {d.nombre_diseñador}</span>
           </div>

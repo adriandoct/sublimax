@@ -36,7 +36,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   onImageScaleChange,
   showScaleControl = true,
 }) => {
-  const [internalColor, setInternalColor] = useState('#1e293b');
+  const [internalColor, setInternalColor] = useState('#ffffff');
   const [internalScale, setInternalScale] = useState(1.0);
 
   const currentColor = externalColor !== undefined ? externalColor : internalColor;
