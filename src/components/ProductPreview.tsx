@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Check } from 'lucide-react';
+import { Palette, Check, ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
 
 export interface ProductPreviewProps {
   imageDataUrl: string | null;
@@ -8,6 +8,9 @@ export interface ProductPreviewProps {
   productColor?: string;
   onColorChange?: (color: string) => void;
   showColorPalette?: boolean;
+  imageScale?: number;
+  onImageScaleChange?: (scale: number) => void;
+  showScaleControl?: boolean;
 }
 
 export const PRESET_COLORS = [
@@ -29,14 +32,28 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   productColor: externalColor,
   onColorChange,
   showColorPalette = true,
+  imageScale: externalScale,
+  onImageScaleChange,
+  showScaleControl = true,
 }) => {
   const [internalColor, setInternalColor] = useState('#1e293b');
+  const [internalScale, setInternalScale] = useState(1.0);
+
   const currentColor = externalColor !== undefined ? externalColor : internalColor;
+  const currentScale = externalScale !== undefined ? externalScale : internalScale;
 
   const handleSelectColor = (hex: string) => {
     setInternalColor(hex);
     if (onColorChange) {
       onColorChange(hex);
+    }
+  };
+
+  const handleScaleChange = (scale: number) => {
+    const clamped = Math.min(2.5, Math.max(0.5, parseFloat(scale.toFixed(2))));
+    setInternalScale(clamped);
+    if (onImageScaleChange) {
+      onImageScaleChange(clamped);
     }
   };
 
@@ -57,6 +74,21 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   const highlightOpacity = isLight ? 0.6 : 0.25;
   const innerMugColor = isLight ? '#334155' : '#0f172a';
   const brandingTextColor = isLight ? '#475569' : '#94a3b8';
+
+  // Helper to compute scaled image dimensions and centered positions
+  const getScaledImg = (baseW: number, baseH: number, centerX: number, centerY: number) => {
+    const w = baseW * currentScale;
+    const h = baseH * currentScale;
+    const x = centerX - w / 2;
+    const y = centerY - h / 2;
+    return { x, y, w, h };
+  };
+
+  const playeraImg = getScaledImg(70, 80, 100, 110);
+  const vasoImg = getScaledImg(60, 115, 100, 117.5);
+  const termoImg = getScaledImg(50, 115, 100, 122.5);
+  const gorraImg = getScaledImg(60, 42, 100, 101);
+  const tazaImg = getScaledImg(64, 85, 100, 112.5);
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
@@ -86,7 +118,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
             {/* Print area */}
             {imageDataUrl ? (
-              <image href={imageDataUrl} x="65" y="70" width="70" height="80" clipPath="url(#chest-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+              <image href={imageDataUrl} x={playeraImg.x} y={playeraImg.y} width={playeraImg.w} height={playeraImg.h} clipPath="url(#chest-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
             ) : (
               <g>
                 <rect x="65" y="70" width="70" height="80" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
@@ -95,7 +127,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               </g>
             )}
             <clipPath id="chest-clip">
-              <rect x="65" y="70" width="70" height="80" rx="4" />
+              <path d="M60 30 L20 70 L45 80 L40 200 L160 200 L155 80 L180 70 L140 30 Q120 45 100 45 Q80 45 60 30Z" />
             </clipPath>
             <text x="100" y="194" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
           </svg>
@@ -115,7 +147,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
             {/* Print Area */}
             {imageDataUrl ? (
-              <image href={imageDataUrl} x="70" y="60" width="60" height="115" clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+              <image href={imageDataUrl} x={vasoImg.x} y={vasoImg.y} width={vasoImg.w} height={vasoImg.h} clipPath="url(#vaso-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
             ) : (
               <g>
                 <rect x="70" y="60" width="60" height="115" rx="6" fill={isLight ? '#f1f5f9' : '#0f172a'} fillOpacity="0.8" stroke="#38bdf8" strokeDasharray="4 3" />
@@ -124,7 +156,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               </g>
             )}
             <clipPath id="vaso-clip">
-              <rect x="70" y="60" width="60" height="115" rx="6" />
+              <rect x="67" y="46" width="66" height="145" rx="14" />
             </clipPath>
             <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} opacity="0.8" fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
           </svg>
@@ -153,7 +185,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
             {/* Print Area */}
             {imageDataUrl ? (
-              <image href={imageDataUrl} x="75" y="65" width="50" height="115" clipPath="url(#termo-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+              <image href={imageDataUrl} x={termoImg.x} y={termoImg.y} width={termoImg.w} height={termoImg.h} clipPath="url(#termo-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
             ) : (
               <g>
                 <rect x="75" y="65" width="50" height="115" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
@@ -162,7 +194,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               </g>
             )}
             <clipPath id="termo-clip">
-              <rect x="75" y="65" width="50" height="115" rx="4" />
+              <path d="M72 48 L128 48 L128 190 Q128 198 120 198 L80 198 Q72 198 72 190 Z" />
             </clipPath>
             <text x="100" y="190" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
           </svg>
@@ -181,7 +213,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
             {/* Print Area */}
             {imageDataUrl ? (
-              <image href={imageDataUrl} x="70" y="80" width="60" height="42" clipPath="url(#gorra-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+              <image href={imageDataUrl} x={gorraImg.x} y={gorraImg.y} width={gorraImg.w} height={gorraImg.h} clipPath="url(#gorra-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
             ) : (
               <g>
                 <rect x="70" y="80" width="60" height="42" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
@@ -190,7 +222,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               </g>
             )}
             <clipPath id="gorra-clip">
-              <rect x="70" y="80" width="60" height="42" rx="4" />
+              <path d="M45 130 C45 75 155 75 155 130 Z" />
             </clipPath>
             <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
           </svg>
@@ -225,7 +257,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
             {/* Print Area */}
             {imageDataUrl ? (
-              <image href={imageDataUrl} x="68" y="70" width="64" height="85" clipPath="url(#taza-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
+              <image href={imageDataUrl} x={tazaImg.x} y={tazaImg.y} width={tazaImg.w} height={tazaImg.h} clipPath="url(#taza-clip)" style={{ objectFit: 'contain' }} preserveAspectRatio="xMidYMid meet" />
             ) : (
               <g>
                 <rect x="68" y="70" width="64" height="85" rx="4" fill={isLight ? '#f1f5f9' : '#0f172a'} stroke={strokeColor} strokeDasharray="4 3" />
@@ -234,7 +266,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               </g>
             )}
             <clipPath id="taza-clip">
-              <rect x="68" y="70" width="64" height="85" rx="4" />
+              <rect x="60" y="55" width="80" height="115" rx="8" />
             </clipPath>
             <text x="100" y="185" textAnchor="middle" fontSize="5.5" fill={brandingTextColor} fontFamily="sans-serif" fontWeight="bold">SUBLIMAX STUDIO</text>
           </svg>
@@ -247,6 +279,59 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           </span>
         )}
       </div>
+
+      {/* Interactive Image Scale / Zoom Controls */}
+      {showScaleControl && imageDataUrl && (
+        <div className="w-full bg-slate-950/70 backdrop-blur-md rounded-2xl p-3 border border-slate-800/80 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-300 px-1">
+            <span className="flex items-center gap-1.5 text-indigo-400">
+              <Maximize2 className="w-3.5 h-3.5" />
+              Tamaño del Diseño (Zoom)
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-800/60 font-bold">
+                {Math.round(currentScale * 100)}%
+              </span>
+              <button
+                type="button"
+                title="Restablecer tamaño (100%)"
+                onClick={() => handleScaleChange(1.0)}
+                className="p-1 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-800 transition"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 px-1">
+            <button
+              type="button"
+              title="Alejar (-10%)"
+              onClick={() => handleScaleChange(currentScale - 0.1)}
+              className="p-1.5 text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition cursor-pointer"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <input
+              type="range"
+              min="0.5"
+              max="2.5"
+              step="0.05"
+              value={currentScale}
+              onChange={e => handleScaleChange(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
+            />
+            <button
+              type="button"
+              title="Agrandar (+10%)"
+              onClick={() => handleScaleChange(currentScale + 0.1)}
+              className="p-1.5 text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-xl border border-slate-800 transition cursor-pointer"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Color Palette Selector */}
       {showColorPalette && (
