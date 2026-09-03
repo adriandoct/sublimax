@@ -113,7 +113,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPl
       setCompletedPedido(newOrder);
       onClearCart();
       onOrderPlaced();
-    }, 2000);
+    }, 300);
   };
 
   if (completedPedido) {

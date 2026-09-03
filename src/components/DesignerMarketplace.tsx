@@ -591,13 +591,20 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   /* ── Upload design ── */
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !imageDataUrl || !currentUser) return;
+    if (!title.trim() || !imageDataUrl) {
+      alert('Por favor agrega un título y selecciona una imagen para tu diseño.');
+      return;
+    }
 
     setIsUploading(true);
-    setTimeout(() => {
-      Database.uploadDesign({
-        usuario_id: currentUser.id,
-        nombre_diseñador: currentUser.nombre,
+
+    const designerId = currentUser?.id || 'guest-designer';
+    const designerName = currentUser?.nombre || 'Invitado';
+
+    try {
+      const newDesign = Database.uploadDesign({
+        usuario_id: designerId,
+        nombre_diseñador: designerName,
         titulo: title,
         imagen_url: imageDataUrl,
         precio: Number(price),
@@ -605,16 +612,42 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         color_producto: productColor,
       });
 
+      // Calculate unit price and create cart item
+      const basePrice = (tipo3D === 'vaso' ? 190 : tipo3D === 'termo' ? 220 : tipo3D === 'gorra' ? 150 : tipo3D === 'taza' ? 120 : 250) + Number(price || 0);
+      const productTypeLabel = tipo3D === 'vaso' ? 'Vaso Vidrio' : tipo3D === 'termo' ? 'Termo Acero' : tipo3D === 'gorra' ? 'Gorra Trucker' : tipo3D === 'taza' ? 'Taza Cerámica' : 'Playera';
+      
+      const cartItem: CartItem = {
+        id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        producto_id: newDesign.id,
+        producto_nombre: `${title} (${productTypeLabel})`,
+        producto_imagen: imageDataUrl,
+        tipo_3d: tipo3D,
+        precio_unitario: basePrice,
+        cantidad: quantity || 1,
+        color: productColor || '#ffffff',
+        diseño_personalizado: { image: imageDataUrl }
+      };
+
+      if (onAddToCart) {
+        onAddToCart(cartItem);
+      } else {
+        Database.addToCart(cartItem);
+      }
+
       setTitle('');
       setPrice(0);
+      setQuantity(1);
       setImageDataUrl(null);
       setImageFileName('');
       setIsUploading(false);
-      setSuccessMsg('¡Diseño enviado con éxito! Pendiente de aprobación por el Administrador.');
+      setSuccessMsg('¡Diseño guardado y añadido a tu carrito al instante!');
       loadDesigns();
       setActiveView('portfolio');
       setTimeout(() => setSuccessMsg(''), 5000);
-    }, 1600);
+    } catch (err) {
+      console.error(err);
+      setIsUploading(false);
+    }
   };
 
   /* ── Join as designer (promote existing user) ── */
