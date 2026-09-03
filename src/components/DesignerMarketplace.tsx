@@ -216,7 +216,7 @@ const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 400;
+      const maxDim = 350; // Optimized max dimension (~25KB-40KB)
       let w = img.width;
       let h = img.height;
       if (w > maxDim || h > maxDim) {
@@ -531,6 +531,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [tipo3D, setTipo3D] = useState<'playera' | 'vaso' | 'termo' | 'gorra' | 'taza'>('playera');
   const [productColor, setProductColor] = useState<string>('#ffffff');
+  const [imagesList, setImagesList] = useState<Array<{ dataUrl: string; fileName: string }>>([]);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [imageFileName, setImageFileName] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -578,10 +579,16 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
       setDesigns(allDesigns);
       return;
     }
+    if (currentUser.role === 'admin') {
+      setDesigns(allDesigns);
+      return;
+    }
     setDesigns(allDesigns.filter(d => 
       d.usuario_id === currentUser.id || 
       (currentUser.nombre && d.nombre_diseñador === currentUser.nombre) ||
-      d.usuario_id === 'guest-designer'
+      (currentUser.email && d.nombre_diseñador === currentUser.email) ||
+      d.usuario_id === 'guest-designer' ||
+      d.nombre_diseñador === 'Invitado'
     ));
   };
 
@@ -617,36 +624,59 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     }
   }, [currentUser]);
 
-  /* ── File picker handler ── */
+  /* ── File picker handler (supports batch selection) ── */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Validate type
-    if (!file.type.startsWith('image/')) {
-      alert('Solo se permiten archivos de imagen (PNG, JPG, SVG, etc.)');
-      return;
-    }
-    // Validate size (max 8 MB)
-    if (file.size > 8 * 1024 * 1024) {
-      alert('La imagen no debe superar 8 MB.');
-      return;
-    }
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        alert(`El archivo "${file.name}" no es una imagen válida (PNG, JPG, SVG).`);
+        return false;
+      }
+      if (file.size > 12 * 1024 * 1024) {
+        alert(`El archivo "${file.name}" supera los 12 MB.`);
+        return false;
+      }
+      return true;
+    });
 
-    setImageFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = ev => {
-      setImageDataUrl(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (validFiles.length === 0) return;
+
+    const loadedEntries: Array<{ dataUrl: string; fileName: string }> = [];
+    let processed = 0;
+
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        if (ev.target?.result) {
+          loadedEntries.push({
+            dataUrl: ev.target.result as string,
+            fileName: file.name
+          });
+        }
+        processed++;
+        if (processed === validFiles.length) {
+          setImagesList(prev => {
+            const next = [...prev, ...loadedEntries];
+            if (next.length > 0) {
+              setImageDataUrl(next[0].dataUrl);
+              setImageFileName(next[0].fileName);
+            }
+            return next;
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
-  /* ── Drop zone drag-and-drop ── */
+  /* ── Drop zone drag-and-drop (supports batch drop) ── */
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    const fakeEvent = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length === 0) return;
+    const fakeEvent = { target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>;
     handleFileChange(fakeEvent);
   };
 
@@ -673,7 +703,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     return canvas.toDataURL('image/png');
   };
 
-  /* ── Upload design ── */
+  /* ── Upload design (Batch processing) ── */
   const handleUpload = async (e?: React.SyntheticEvent) => {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -688,43 +718,50 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     setIsUploading(true);
 
     try {
-      const compressedImage = imageDataUrl 
-        ? await compressImageIfNeeded(imageDataUrl) 
-        : generateDefaultDesignImage(currentTitle, tipo3D);
-
       const designerId = currentUser?.id || 'guest-designer';
       const designerName = currentUser?.nombre || 'Invitado';
-
-      const newDesign = Database.uploadDesign({
-        usuario_id: designerId,
-        nombre_diseñador: designerName,
-        titulo: currentTitle,
-        imagen_url: compressedImage,
-        precio: Number(price || 0),
-        tipo_3d: tipo3D,
-        color_producto: productColor,
-      });
-
-      // Calculate unit price and create cart item
       const basePrice = (tipo3D === 'vaso' ? 190 : tipo3D === 'termo' ? 220 : tipo3D === 'gorra' ? 150 : tipo3D === 'taza' ? 120 : 250) + Number(price || 0);
       const productTypeLabel = tipo3D === 'vaso' ? 'Vaso Vidrio' : tipo3D === 'termo' ? 'Termo Acero' : tipo3D === 'gorra' ? 'Gorra Trucker' : tipo3D === 'taza' ? 'Taza Cerámica' : 'Playera';
-      
-      const cartItem: CartItem = {
-        id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        producto_id: newDesign.id,
-        producto_nombre: `${currentTitle} (${productTypeLabel})`,
-        producto_imagen: compressedImage,
-        tipo_3d: tipo3D,
-        precio_unitario: basePrice,
-        cantidad: quantity || 1,
-        color: productColor || '#ffffff',
-        diseño_personalizado: { image: compressedImage }
-      };
 
-      if (onAddToCart) {
-        onAddToCart(cartItem);
-      } else {
-        Database.addToCart(cartItem);
+      const itemsToProcess = imagesList.length > 0 
+        ? imagesList 
+        : [{ dataUrl: imageDataUrl || generateDefaultDesignImage(currentTitle, tipo3D), fileName: 'diseno.png' }];
+
+      let uploadedCount = 0;
+
+      for (let i = 0; i < itemsToProcess.length; i++) {
+        const item = itemsToProcess[i];
+        const compressedImage = await compressImageIfNeeded(item.dataUrl);
+        const itemTitle = itemsToProcess.length > 1 ? `${currentTitle} (${i + 1})` : currentTitle;
+
+        const newDesign = Database.uploadDesign({
+          usuario_id: designerId,
+          nombre_diseñador: designerName,
+          titulo: itemTitle,
+          imagen_url: compressedImage,
+          precio: Number(price || 0),
+          tipo_3d: tipo3D,
+          color_producto: productColor,
+        });
+
+        const cartItem: CartItem = {
+          id: `cart-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+          producto_id: newDesign.id,
+          producto_nombre: `${itemTitle} (${productTypeLabel})`,
+          producto_imagen: compressedImage,
+          tipo_3d: tipo3D,
+          precio_unitario: basePrice,
+          cantidad: quantity || 1,
+          color: productColor || '#ffffff',
+          diseño_personalizado: { image: compressedImage }
+        };
+
+        if (onAddToCart) {
+          onAddToCart(cartItem);
+        } else {
+          Database.addToCart(cartItem);
+        }
+        uploadedCount++;
       }
 
       setTitle('');
@@ -732,12 +769,15 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
       setQuantity(1);
       setImageDataUrl(null);
       setImageFileName('');
+      setImagesList([]);
       setIsUploading(false);
-      
-      alert(`¡DISEÑO REGISTRADO CON ÉXITO!\n\nTu diseño "${currentTitle}" fue enviado a revisión y añadido inmediatamente a tu carrito de compras (${quantity || 1} pza).`);
-      setSuccessMsg(`¡"${currentTitle}" enviado a revisión y añadido a tu carrito (${quantity} pza${quantity > 1 ? 's' : ''})!`);
+
+      if (isAdmin) loadAdminData();
       loadDesigns();
       setActiveView('portfolio');
+
+      alert(`¡DISEÑOS REGISTRADOS CON ÉXITO!\n\nSe subieron ${uploadedCount} diseño(s) ("${currentTitle}") a revisión y se añadieron a tu portafolio/carrito.`);
+      setSuccessMsg(`¡${uploadedCount} diseño(s) enviado(s) a revisión y añadidos a tu portafolio!`);
       setTimeout(() => setSuccessMsg(''), 6000);
     } catch (err: any) {
       console.error("Error al subir diseño:", err);
@@ -1044,21 +1084,62 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
 
               {/* ── Image drop zone ── */}
               <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Imagen del Diseño *
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                  Imágenes del Diseño (Puedes subir varios archivos a la vez) *
                 </label>
                 <div
                   id="image-drop-zone"
                   onDragOver={e => e.preventDefault()}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`relative w-full min-h-[140px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition gap-2 ${
-                    imageDataUrl
+                  className={`relative w-full min-h-[140px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition gap-2 p-3 ${
+                    imagesList.length > 0 || imageDataUrl
                       ? 'border-indigo-500/50 bg-indigo-950/20'
                       : 'border-slate-700 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-indigo-950/10'
                   }`}
                 >
-                  {imageDataUrl ? (
+                  {imagesList.length > 0 ? (
+                    <div className="w-full flex flex-col items-center gap-3" onClick={e => e.stopPropagation()}>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full max-h-48 overflow-y-auto p-1">
+                        {imagesList.map((img, idx) => (
+                          <div key={idx} className="relative group bg-slate-900 border border-slate-800 rounded-xl p-2 flex flex-col items-center">
+                            <img src={img.dataUrl} alt={`Vista ${idx}`} className="h-16 w-full object-contain rounded-lg mb-1" />
+                            <span className="text-[9px] text-slate-300 truncate max-w-full font-semibold">{img.fileName}</span>
+                            <button
+                              type="button"
+                              onClick={ev => {
+                                ev.stopPropagation();
+                                setImagesList(prev => {
+                                  const next = prev.filter((_, i) => i !== idx);
+                                  if (next.length > 0) {
+                                    setImageDataUrl(next[0].dataUrl);
+                                    setImageFileName(next[0].fileName);
+                                  } else {
+                                    setImageDataUrl(null);
+                                    setImageFileName('');
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="absolute top-1 right-1 p-1 bg-slate-950/90 hover:bg-red-900 text-slate-400 hover:text-red-200 rounded-lg transition border border-slate-700"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between w-full px-2 pt-1 border-t border-slate-800/80 text-xs">
+                        <span className="text-indigo-400 font-bold">{imagesList.length} archivo(s) listo(s)</span>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-indigo-300 hover:text-white underline text-[11px] font-semibold"
+                        >
+                          + Añadir más archivos
+                        </button>
+                      </div>
+                    </div>
+                  ) : imageDataUrl ? (
                     <>
                       <img
                         src={imageDataUrl}
@@ -1074,6 +1155,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                           ev.stopPropagation();
                           setImageDataUrl(null);
                           setImageFileName('');
+                          setImagesList([]);
                           if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
                         className="absolute top-2 right-2 p-1.5 bg-slate-900/80 hover:bg-red-950 text-slate-400 hover:text-red-400 rounded-lg transition"
@@ -1085,10 +1167,10 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                     <>
                       <ImagePlus className="w-10 h-10 text-slate-600" />
                       <span className="text-xs text-slate-500 font-medium text-center px-4">
-                        Arrastra tu imagen aquí o{' '}
-                        <span className="text-indigo-400 underline">selecciona un archivo</span>
+                        Arrastra tus imágenes aquí o{' '}
+                        <span className="text-indigo-400 underline">selecciona uno o varios archivos</span>
                       </span>
-                      <span className="text-[10px] text-slate-600">PNG, JPG, SVG — Máx. 8 MB</span>
+                      <span className="text-[10px] text-slate-600">PNG, JPG, SVG — Carga individual o múltiple</span>
                     </>
                   )}
                   <input
@@ -1096,6 +1178,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
+                    multiple
                     className="hidden"
                     onChange={handleFileChange}
                   />
@@ -1436,7 +1519,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
             {(() => {
               const allD = designersData.flatMap(d => d.designs);
               return [
-                { label: 'Diseñadores', value: designersData.length, icon: <Users className="w-4 h-4 text-indigo-400" />, color: 'text-indigo-300' },
+                { label: 'Usuarios', value: designersData.length, icon: <Users className="w-4 h-4 text-indigo-400" />, color: 'text-indigo-300' },
                 { label: 'Pendientes', value: allD.filter(d => !d.aprobado).length, icon: <Clock className="w-4 h-4 text-amber-400" />, color: 'text-amber-300' },
                 { label: 'Aprobados', value: allD.filter(d => d.aprobado).length, icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />, color: 'text-emerald-300' },
               ].map(s => (
@@ -1455,8 +1538,8 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
           {designersData.length === 0 ? (
             <div className="glass-panel rounded-3xl p-12 border-slate-800 text-center text-slate-600 text-sm flex flex-col items-center gap-3">
               <Users className="w-12 h-12 text-slate-800" />
-              <p>No hay diseñadores registrados todavía.</p>
-              <p className="text-xs text-slate-700">Los diseñadores aparecerán aquí cuando se registren y suban diseños.</p>
+              <p>No hay usuarios autenticados todavía.</p>
+              <p className="text-xs text-slate-700">Los usuarios registrados y autenticados aparecerán aquí.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-6">
@@ -1490,7 +1573,7 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
                   {dList.length === 0 ? (
                     <div className="text-center py-8 text-slate-600 text-xs flex flex-col items-center gap-2">
                       <AlertCircle className="w-8 h-8 text-slate-800" />
-                      Este diseñador aún no ha subido diseños.
+                      Este usuario aún no ha subido diseños a su portafolio.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

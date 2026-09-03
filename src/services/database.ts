@@ -899,7 +899,17 @@ export class Database {
     if (supabaseClient) {
       supabaseClient.from('diseños').select('*').then(({ data }) => {
         if (data && data.length > 0) {
-          localStorage.setItem('sublimax_diseños', JSON.stringify(data));
+          const currentRaw = localStorage.getItem('sublimax_diseños');
+          const currentLocal: Diseño[] = currentRaw ? JSON.parse(currentRaw) : [];
+          // Preserve local designs (e.g. starting with des-) that are not in remote DB
+          const remoteIds = new Set(data.map((d: any) => d.id));
+          const localOnly = currentLocal.filter((ld: Diseño) => !remoteIds.has(ld.id));
+          const merged = [...data, ...localOnly];
+          try {
+            localStorage.setItem('sublimax_diseños', JSON.stringify(merged));
+          } catch (e) {
+            console.warn("Storage warning when saving merged designs:", e);
+          }
         }
       });
     }
@@ -923,9 +933,10 @@ export class Database {
 
   static uploadDesign(design: Omit<Diseño, 'id' | 'ventas' | 'aprobado'>): Diseño {
     const designs = this.getDesigns();
+    const uniqueSuffix = Math.random().toString(36).substring(2, 7);
     const newDesign: Diseño = {
       ...design,
-      id: `des-${Date.now()}`,
+      id: `des-${Date.now()}-${uniqueSuffix}`,
       ventas: 0,
       aprobado: false
     };
@@ -933,26 +944,30 @@ export class Database {
     try {
       localStorage.setItem('sublimax_diseños', JSON.stringify(designs));
     } catch (e) {
-      console.warn("localStorage quota exceeded, trimming old designs:", e);
+      console.warn("localStorage quota exceeded, trimming designs:", e);
       try {
-        localStorage.setItem('sublimax_diseños', JSON.stringify(designs.slice(0, 15)));
+        // Fallback: slice to 20 designs and save
+        localStorage.setItem('sublimax_diseños', JSON.stringify(designs.slice(0, 20)));
       } catch (err2) {
         console.error("Failed to write to localStorage:", err2);
       }
     }
 
-    // Sync to Supabase
-    if (supabaseClient && !design.usuario_id.includes('user-')) {
-      supabaseClient.from('diseños').insert({
-        usuario_id: design.usuario_id,
-        nombre_diseñador: design.nombre_diseñador,
-        titulo: design.titulo,
-        imagen_url: design.imagen_url,
-        precio: design.precio,
-        tipo_3d: design.tipo_3d || 'playera',
-        color_producto: design.color_producto || '#ffffff',
-        aprobado: false
-      }).then(({ error }) => { if (error) console.error("Error uploading design to Supabase:", error); });
+    // Sync to Supabase in background if valid UUID
+    if (supabaseClient) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(design.usuario_id);
+      if (isUuid) {
+        supabaseClient.from('diseños').insert({
+          usuario_id: design.usuario_id,
+          nombre_diseñador: design.nombre_diseñador,
+          titulo: design.titulo,
+          imagen_url: design.imagen_url,
+          precio: design.precio,
+          tipo_3d: design.tipo_3d || 'playera',
+          color_producto: design.color_producto || '#ffffff',
+          aprobado: false
+        }).then(({ error }) => { if (error) console.error("Error uploading design to Supabase:", error); });
+      }
     }
 
     return newDesign;
@@ -1021,16 +1036,48 @@ export class Database {
     this.rejectDesign(designId);
   }
 
-
   static getAllDesignersWithDesigns(): { usuario: Usuario; designs: Diseño[] }[] {
     this.initialize();
     const users: Usuario[] = JSON.parse(localStorage.getItem('sublimax_usuarios') || '[]');
+    const activeUser = this.getActiveUser();
+
+    // Make sure active user is saved in the user registry if not already present
+    if (activeUser && !users.some(u => u.id === activeUser.id || (u.email && activeUser.email && u.email.toLowerCase() === activeUser.email.toLowerCase()))) {
+      users.push(activeUser);
+      localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
+    }
+
     const allDesigns: Diseño[] = JSON.parse(localStorage.getItem('sublimax_diseños') || '[]');
-    const designers = users.filter(u => u.role === 'designer' || u.role === 'admin');
-    return designers.map(u => ({
+    // Include ALL authenticated and registered users (admins, designers, and regular users)
+    const designers = users;
+
+    const result = designers.map(u => ({
       usuario: u,
-      designs: allDesigns.filter(d => d.usuario_id === u.id),
+      designs: allDesigns.filter(d => 
+        d.usuario_id === u.id || 
+        (u.nombre && d.nombre_diseñador === u.nombre) ||
+        (u.email && d.nombre_diseñador === u.email)
+      ),
     }));
+
+    // Find any unassigned designs (uploaded by guests or unlinked accounts)
+    const assignedIds = new Set(result.flatMap(r => r.designs.map(d => d.id)));
+    const unassigned = allDesigns.filter(d => !assignedIds.has(d.id));
+
+    if (unassigned.length > 0) {
+      result.push({
+        usuario: {
+          id: 'guest-designer',
+          email: 'invitado@sublimax.com',
+          nombre: 'Diseños de Invitados / Pendientes',
+          role: 'designer',
+          fecha_registro: new Date().toISOString().split('T')[0]
+        },
+        designs: unassigned
+      });
+    }
+
+    return result;
   }
 
 
