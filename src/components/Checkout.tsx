@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Database, CartItem, Cupon, Pedido } from '../services/database';
-import { CreditCard, ShieldCheck, Ticket, Award, RefreshCw, CheckCircle, Printer, ArrowRight, Copy, Check } from 'lucide-react';
+import { ShieldCheck, Ticket, Award, RefreshCw, CheckCircle, Copy, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface CheckoutProps {
@@ -11,7 +11,7 @@ interface CheckoutProps {
 }
 
 export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPlaced, onClearCart }) => {
-  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'stripe' | 'paypal' | 'oxxo'>('mercadopago');
+  const [paymentMethod] = useState<'mercadopago'>('mercadopago');
   const [copiedMp, setCopiedMp] = useState(false);
   
   // Coupon states
@@ -24,13 +24,6 @@ export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPl
   const userPoints = currentUser ? Database.getTotalPoints(currentUser.id) : 0;
   // Let 10 points = $1 MXN discount
   const pointsDiscountVal = Math.min(userPoints * 0.1, cart.reduce((sum, item) => sum + (item.precio_unitario * item.cantidad), 0) * 0.5); // cap at 50% of subtotal
-
-  // Form states
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [cardFocused, setCardFocused] = useState<'front' | 'back'>('front');
 
   // Checkout Status
   const [isProcessing, setIsProcessing] = useState(false);
@@ -156,35 +149,7 @@ export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPl
           </div>
         </div>
 
-        {paymentMethod === 'oxxo' && (
-          /* OXXO Barcode Pay Slip Display */
-          <div className="w-full bg-white text-slate-950 p-6 rounded-2xl border border-slate-200 text-center flex flex-col gap-4 mb-6">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <span className="text-red-600 font-extrabold text-lg tracking-widest">OXXO PAY</span>
-              <span className="text-[10px] text-slate-400">Ficha digital de pago</span>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              {/* Fake barcode block */}
-              <div className="h-10 w-48 bg-slate-950 flex gap-1 p-1">
-                {[2,4,1,3,1,4,2,3,1,4,2,3,1,4,1,2,3,1,4].map((width, i) => (
-                  <div key={i} className="bg-white h-full" style={{ flexGrow: width }} />
-                ))}
-              </div>
-              <span className="font-mono text-xs font-bold text-slate-700 mt-2">0000 1234 5678 9012</span>
-            </div>
 
-            <div className="text-[10px] text-slate-500">
-              Paga en caja en cualquier sucursal OXXO. La acreditación es inmediata.
-            </div>
-            <button 
-              onClick={() => window.print()}
-              className="py-2 px-4 bg-slate-900 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 mx-auto"
-            >
-              <Printer className="w-3.5 h-3.5" /> Imprimir Ficha
-            </button>
-          </div>
-        )}
 
         <button
           onClick={() => window.location.reload()}
@@ -201,246 +166,93 @@ export const Checkout: React.FC<CheckoutProps> = ({ cart, currentUser, onOrderPl
       {/* Left Column: Form / Pay Method Viewport */}
       <div className="lg:col-span-7 flex flex-col gap-6">
         
-        {/* Payment selector */}
-        <div className="glass-panel rounded-3xl p-6 border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Método de pago activo</h3>
-            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Mercado Pago Activo
+        {/* Unified Professional Mercado Pago Direct Transfer Panel */}
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 border-slate-800 flex flex-col gap-6">
+          
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-extrabold text-2xl shadow-inner">
+                💙
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  Mercado Pago Directo
+                </h3>
+                <p className="text-slate-400 text-xs">Transferencia bancaria SPEI o depósito inmediato</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              Método de Pago Oficial
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            {[
-              { id: 'mercadopago', name: 'Mercado Pago (Transferencia)', logo: '💙', active: true },
-              { id: 'stripe', name: 'Tarjeta (Stripe)', logo: '💳', active: false },
-              { id: 'paypal', name: 'PayPal', logo: '🅿️', active: false },
-              { id: 'oxxo', name: 'OXXO Pay', logo: '🏪', active: false },
-            ].map(method => (
-              <button
-                key={method.id}
-                onClick={() => setPaymentMethod(method.id as any)}
-                className={`py-3.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition ${
-                  paymentMethod === method.id 
-                    ? 'bg-cyan-950/60 border-cyan-500 text-cyan-200 shadow-lg shadow-cyan-950/50' 
-                    : 'bg-slate-950/40 border-slate-850/60 text-slate-500 hover:border-slate-800'
-                }`}
-              >
-                <span className="text-xl">{method.logo}</span>
-                <span className="text-[11px] text-center leading-tight">{method.name}</span>
-              </button>
-            ))}
+
+          {/* Digital Mercado Pago Card Graphic */}
+          <div className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 p-6 text-white shadow-2xl flex flex-col gap-5 border border-cyan-400/30 relative overflow-hidden">
+            <div className="flex justify-between items-center">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-cyan-100">Mercado Pago — Tarjeta de Depósito</span>
+              <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-extrabold text-white tracking-wider border border-white/20">SPEI / DÉBITO</span>
+            </div>
+
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-cyan-200 block mb-1.5 font-medium">Número de Tarjeta Mercado Pago</span>
+              <div className="font-mono text-xl sm:text-2xl font-extrabold tracking-wider flex items-center justify-between bg-slate-950/40 backdrop-blur-md p-3.5 rounded-xl border border-white/15">
+                <span className="tracking-widest text-white">4312 5700 1824 6147</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('4312570018246147');
+                    setCopiedMp(true);
+                    setTimeout(() => setCopiedMp(false), 3000);
+                  }}
+                  className="px-3.5 py-1.5 bg-white hover:bg-cyan-50 text-slate-950 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 shrink-0"
+                >
+                  {copiedMp ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-700" />}
+                  {copiedMp ? '¡Copiado!' : 'Copiar'}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-xs pt-2 border-t border-white/15">
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-cyan-200 block">Beneficiario</span>
+                <span className="font-bold block text-sm truncate text-white">SUBLIMAX Studio</span>
+              </div>
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-cyan-200 block">Banco Emisor</span>
+                <span className="font-bold block text-sm text-white">Mercado Pago / STP</span>
+              </div>
+            </div>
           </div>
+
+          {/* Step instructions */}
+          <div className="w-full bg-slate-950/80 rounded-2xl p-5 border border-slate-800/80 text-xs text-slate-300 flex flex-col gap-3">
+            <span className="font-bold text-slate-200 text-xs uppercase tracking-wider block">Pasos para completar tu pago:</span>
+            <ol className="space-y-2.5 text-slate-300 text-xs">
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 font-bold text-[11px] flex items-center justify-center shrink-0 border border-cyan-500/30">1</span>
+                <span>Abre tu aplicación bancaria (BBVA, Banamex, Nu, Mercado Pago, Banorte, etc.).</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 font-bold text-[11px] flex items-center justify-center shrink-0 border border-cyan-500/30">2</span>
+                <span>Transfiere a la tarjeta <strong className="text-cyan-300 font-mono">4312 5700 1824 6147</strong> el monto total de <strong className="text-white font-bold text-sm">${finalTotal.toFixed(2)} MXN</strong>.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 font-bold text-[11px] flex items-center justify-center shrink-0 border border-cyan-500/30">3</span>
+                <span>Haz clic en el botón de abajo para registrar y procesar tu pedido inmediatamente.</span>
+              </li>
+            </ol>
+          </div>
+
+          <button
+            onClick={handlePay}
+            disabled={isProcessing}
+            className="w-full py-4.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 disabled:opacity-50 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-xl shadow-cyan-950/40 cursor-pointer"
+          >
+            {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            {isProcessing ? 'Procesando Orden...' : 'Confirmar Transferencia y Procesar Pedido'}
+          </button>
         </div>
-
-        {/* Credit Card (Stripe Mode) Form with flip effect */}
-        {paymentMethod === 'stripe' && (
-          <form onSubmit={handlePay} className="glass-panel rounded-3xl p-6 border-slate-800 flex flex-col gap-6">
-            
-            {/* Interactive Card Graphic */}
-            <div className="w-full max-w-[340px] h-[190px] mx-auto perspective relative">
-              <div 
-                className={`w-full h-full duration-700 preserve-3d relative ${
-                  cardFocused === 'back' ? 'rotate-y-180' : ''
-                }`}
-              >
-                {/* Front Side */}
-                <div className="absolute w-full h-full rounded-2xl bg-gradient-to-tr from-indigo-700 via-purple-700 to-pink-700 p-5 text-white flex flex-col justify-between backface-hidden shadow-xl">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">SUBLIMAX Studio Card</span>
-                    <span className="text-xl font-bold">VISA</span>
-                  </div>
-                  <div className="font-mono text-base tracking-widest py-2">
-                    {cardNumber || '•••• •••• •••• ••••'}
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <div>
-                      <span className="text-[8px] text-indigo-200 uppercase block">Propietario</span>
-                      <span className="font-semibold uppercase truncate max-w-[150px] block">{cardName || 'Nombre Completo'}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[8px] text-indigo-200 uppercase block">Expira</span>
-                      <span className="font-semibold">{cardExpiry || 'MM/AA'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Back Side */}
-                <div className="absolute w-full h-full rounded-2xl bg-gradient-to-tr from-purple-800 to-indigo-950 text-white flex flex-col justify-between rotate-y-180 backface-hidden shadow-xl">
-                  <div className="w-full h-8 bg-slate-900 mt-4" />
-                  <div className="px-5 pb-5 text-right">
-                    <span className="text-[8px] text-indigo-200 uppercase block mb-1">CVV</span>
-                    <span className="bg-white text-slate-950 font-mono px-3 py-1 rounded font-bold text-xs inline-block">
-                      {cardCvv || '•••'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Input fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wide block mb-1">Número de Tarjeta</label>
-                <input
-                  type="text"
-                  required
-                  maxLength={19}
-                  value={cardNumber}
-                  onFocus={() => setCardFocused('front')}
-                  onChange={(e) => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim())}
-                  placeholder="4000 1234 5678 9010"
-                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wide block mb-1">Nombre Impreso en Tarjeta</label>
-                <input
-                  type="text"
-                  required
-                  value={cardName}
-                  onFocus={() => setCardFocused('front')}
-                  onChange={(e) => setCardName(e.target.value)}
-                  placeholder="JUAN PEREZ GARCIA"
-                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white uppercase"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wide block mb-1">Vencimiento</label>
-                <input
-                  type="text"
-                  required
-                  maxLength={5}
-                  value={cardExpiry}
-                  onFocus={() => setCardFocused('front')}
-                  onChange={(e) => setCardExpiry(e.target.value)}
-                  placeholder="MM/AA"
-                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] text-slate-400 uppercase tracking-wide block mb-1">Cód. Seguridad (CVV)</label>
-                <input
-                  type="password"
-                  required
-                  maxLength={3}
-                  value={cardCvv}
-                  onFocus={() => setCardFocused('back')}
-                  onBlur={() => setCardFocused('front')}
-                  onChange={(e) => setCardCvv(e.target.value)}
-                  placeholder="123"
-                  className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-xs text-white"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isProcessing}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition mt-2"
-            >
-              {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-              Pagar con Tarjeta via Stripe
-            </button>
-          </form>
-        )}
-
-        {/* Mercado Pago, PayPal, or OXXO Simulation screens */}
-        {paymentMethod !== 'stripe' && (
-          <div className="glass-panel rounded-3xl p-8 border-slate-800 text-center flex flex-col items-center justify-center min-h-[300px] gap-4">
-            {paymentMethod === 'paypal' && (
-              <>
-                <span className="text-4xl">🅿️</span>
-                <h4 className="text-sm font-bold text-white">Simulador de Transacción PayPal</h4>
-                <p className="text-slate-400 text-xs max-w-xs">
-                  Al hacer clic se abrirá una pasarela de pago virtual para confirmar los fondos de tu saldo PayPal.
-                </p>
-              </>
-            )}
-            {paymentMethod === 'mercadopago' && (
-              <div className="w-full flex flex-col items-center gap-5 text-left">
-                <div className="flex items-center gap-3 w-full border-b border-slate-800 pb-3">
-                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-extrabold text-lg">
-                    💙
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Transferencia Directa Mercado Pago</h4>
-                    <p className="text-slate-400 text-xs">Transfiere desde tu banca móvil o app de Mercado Pago</p>
-                  </div>
-                </div>
-
-                {/* Digital Mercado Pago Card Graphic */}
-                <div className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 p-5 text-white shadow-xl flex flex-col gap-4 border border-cyan-400/30 relative overflow-hidden">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-100">Mercado Pago — Tarjeta de Depósito</span>
-                    <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white">SPEI / Débito</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[9px] uppercase tracking-wider text-cyan-200 block mb-1">Número de Tarjeta Mercado Pago</span>
-                    <div className="font-mono text-lg font-bold tracking-wider flex items-center justify-between bg-black/25 p-2.5 rounded-xl border border-white/10">
-                      <span>4312 5700 1824 6147</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText('4312570018246147');
-                          setCopiedMp(true);
-                          setTimeout(() => setCopiedMp(false), 3000);
-                        }}
-                        className="px-3 py-1 bg-white text-slate-900 hover:bg-cyan-100 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                      >
-                        {copiedMp ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-700" />}
-                        {copiedMp ? '¡Copiado!' : 'Copiar'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-white/10">
-                    <div>
-                      <span className="text-[8px] uppercase tracking-wider text-cyan-200 block">Beneficiario</span>
-                      <span className="font-semibold block truncate">SUBLIMAX Studio</span>
-                    </div>
-                    <div>
-                      <span className="text-[8px] uppercase tracking-wider text-cyan-200 block">Banco</span>
-                      <span className="font-semibold block">Mercado Pago / STP</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step instructions */}
-                <div className="w-full bg-slate-950/60 rounded-2xl p-4 border border-slate-850 text-xs text-slate-300 flex flex-col gap-2">
-                  <span className="font-bold text-slate-200 block">Pasos para realizar la transferencia:</span>
-                  <ol className="list-decimal list-inside space-y-1.5 text-slate-400 text-[11px]">
-                    <li>Abre la app de tu banco (BBVA, Banamex, Nu, Banorte) o Mercado Pago.</li>
-                    <li>Transfiere a la tarjeta <strong className="text-cyan-300">4312 5700 1824 6147</strong> el total de <strong className="text-white">${finalTotal.toFixed(2)} MXN</strong>.</li>
-                    <li>Haz clic abajo en <strong className="text-indigo-400">"Procesar Orden de Compra"</strong> para registrar tu pedido.</li>
-                  </ol>
-                </div>
-              </div>
-            )}
-            {paymentMethod === 'oxxo' && (
-              <>
-                <span className="text-4xl">🏪</span>
-                <h4 className="text-sm font-bold text-white">Ficha de Depósito OXXO Pay</h4>
-                <p className="text-slate-400 text-xs max-w-xs">
-                  Generaremos un código de barras. Podrás acudir a caja en tu OXXO más cercano para abonar en efectivo.
-                </p>
-              </>
-            )}
-
-            <button
-              onClick={handlePay}
-              disabled={isProcessing}
-              className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-2xl text-xs flex items-center gap-1.5 transition mt-4"
-            >
-              {isProcessing && <RefreshCw className="w-4 h-4 animate-spin" />}
-              Procesar Orden de Compra <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
 
       </div>
 
