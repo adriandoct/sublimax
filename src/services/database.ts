@@ -904,8 +904,17 @@ export class Database {
       ventas: 0,
       aprobado: false
     };
-    designs.push(newDesign);
-    localStorage.setItem('sublimax_diseños', JSON.stringify(designs));
+    designs.unshift(newDesign);
+    try {
+      localStorage.setItem('sublimax_diseños', JSON.stringify(designs));
+    } catch (e) {
+      console.warn("localStorage quota exceeded, trimming old designs:", e);
+      try {
+        localStorage.setItem('sublimax_diseños', JSON.stringify(designs.slice(0, 15)));
+      } catch (err2) {
+        console.error("Failed to write to localStorage:", err2);
+      }
+    }
 
     // Sync to Supabase
     if (supabaseClient && !design.usuario_id.includes('user-')) {

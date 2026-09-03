@@ -615,27 +615,71 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     return canvas.toDataURL();
   };
 
+  /* ── Helper: compress base64 image ── */
+  const compressImageIfNeeded = (dataUrl: string): Promise<string> => {
+    return new Promise(resolve => {
+      if (!dataUrl || !dataUrl.startsWith('data:image')) {
+        resolve(dataUrl);
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 500;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        } else {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
   /* ── Upload design ── */
-  const handleUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      alert('Por favor escribe un título para tu diseño.');
+  const handleUpload = async (e?: React.SyntheticEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const titleInputEl = document.getElementById('design-title-input') as HTMLInputElement | null;
+    const currentTitle = (title || titleInputEl?.value || '').trim();
+
+    if (!currentTitle) {
+      alert('Por favor escribe un título en el campo "Título del Diseño".');
       return;
     }
 
     setIsUploading(true);
 
-    const finalImageUrl = imageDataUrl || generateDefaultDesignImage(title, tipo3D);
-    const designerId = currentUser?.id || 'guest-designer';
-    const designerName = currentUser?.nombre || 'Invitado';
-
     try {
+      const compressedImage = imageDataUrl 
+        ? await compressImageIfNeeded(imageDataUrl) 
+        : generateDefaultDesignImage(currentTitle, tipo3D);
+
+      const designerId = currentUser?.id || 'guest-designer';
+      const designerName = currentUser?.nombre || 'Invitado';
+
       const newDesign = Database.uploadDesign({
         usuario_id: designerId,
         nombre_diseñador: designerName,
-        titulo: title,
-        imagen_url: finalImageUrl,
-        precio: Number(price),
+        titulo: currentTitle,
+        imagen_url: compressedImage,
+        precio: Number(price || 0),
         tipo_3d: tipo3D,
         color_producto: productColor,
       });
@@ -647,13 +691,13 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
       const cartItem: CartItem = {
         id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         producto_id: newDesign.id,
-        producto_nombre: `${title} (${productTypeLabel})`,
-        producto_imagen: finalImageUrl,
+        producto_nombre: `${currentTitle} (${productTypeLabel})`,
+        producto_imagen: compressedImage,
         tipo_3d: tipo3D,
         precio_unitario: basePrice,
         cantidad: quantity || 1,
         color: productColor || '#ffffff',
-        diseño_personalizado: { image: finalImageUrl }
+        diseño_personalizado: { image: compressedImage }
       };
 
       if (onAddToCart) {
@@ -662,20 +706,22 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
         Database.addToCart(cartItem);
       }
 
-      const savedTitle = title;
       setTitle('');
       setPrice(0);
       setQuantity(1);
       setImageDataUrl(null);
       setImageFileName('');
       setIsUploading(false);
-      setSuccessMsg(`¡"${savedTitle}" enviado a revisión y añadido a tu carrito (${quantity} pza${quantity > 1 ? 's' : ''})!`);
+      
+      alert(`¡DISEÑO REGISTRADO CON ÉXITO!\n\nTu diseño "${currentTitle}" fue enviado a revisión y añadido inmediatamente a tu carrito de compras (${quantity || 1} pza).`);
+      setSuccessMsg(`¡"${currentTitle}" enviado a revisión y añadido a tu carrito (${quantity} pza${quantity > 1 ? 's' : ''})!`);
       loadDesigns();
       setActiveView('portfolio');
       setTimeout(() => setSuccessMsg(''), 6000);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Error al subir diseño:", err);
       setIsUploading(false);
+      alert('Ocurrió un inconveniente al procesar el diseño: ' + (err?.message || err));
     }
   };
 
