@@ -515,11 +515,15 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
   };
 
   const loadDesigns = () => {
-    if (!currentUser) return;
     const allDesigns = Database.getDesigns();
+    if (!currentUser) {
+      setDesigns(allDesigns);
+      return;
+    }
     setDesigns(allDesigns.filter(d => 
       d.usuario_id === currentUser.id || 
-      (currentUser.nombre && d.nombre_diseñador === currentUser.nombre)
+      (currentUser.nombre && d.nombre_diseñador === currentUser.nombre) ||
+      d.usuario_id === 'guest-designer'
     ));
   };
 
@@ -1132,7 +1136,8 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
 
               <button
                 id="submit-design-btn"
-                type="submit"
+                type="button"
+                onClick={handleUpload}
                 disabled={isUploading || !title.trim()}
                 className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-indigo-950/40 cursor-pointer"
               >
