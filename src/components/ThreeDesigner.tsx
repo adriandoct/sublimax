@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Upload, Type, Smile, Palette, ShoppingCart, RefreshCw, ZoomIn, ZoomOut, Check } from 'lucide-react';
+import { Upload, Type, Smile, Palette, ShoppingCart, RefreshCw, ZoomIn, ZoomOut, Check, Move, ArrowDown, ArrowUp, AlignCenter, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Database, CartItem, Producto } from '../services/database';
 
 interface ThreeDesignerProps {
@@ -499,31 +499,39 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
   };
 
   // Move Selected item
-  const updateItemPosition = (dir: 'up' | 'down' | 'left' | 'right' | 'shrink' | 'grow', target: 'img' | 'sticker' | 'text') => {
+  const updateItemPosition = (
+    dir: 'up' | 'down' | 'left' | 'right' | 'shrink' | 'grow' | 'center' | 'center-x' | 'center-y' | 'bajar' | 'subir',
+    target: 'img' | 'sticker' | 'text'
+  ) => {
     if (target === 'text') {
-      if (dir === 'up') setTextY(prev => Math.max(10, prev - 15));
-      if (dir === 'down') setTextY(prev => Math.min(500, prev + 15));
+      if (dir === 'up' || dir === 'subir') setTextY(prev => Math.max(10, prev - 15));
+      if (dir === 'down' || dir === 'bajar') setTextY(prev => Math.min(500, prev + 15));
       if (dir === 'left') setTextX(prev => Math.max(10, prev - 15));
       if (dir === 'right') setTextX(prev => Math.min(500, prev + 15));
       if (dir === 'shrink') setTextSize(prev => Math.max(12, prev - 3));
       if (dir === 'grow') setTextSize(prev => Math.min(80, prev + 3));
+      if (dir === 'center') { setTextX(256); setTextY(256); }
     } else if (target === 'img') {
-      if (dir === 'up') setImgY(prev => Math.max(10, prev - 15));
-      if (dir === 'down') setImgY(prev => Math.min(500, prev + 15));
+      if (dir === 'up' || dir === 'subir') setImgY(prev => Math.max(10, prev - 15));
+      if (dir === 'down' || dir === 'bajar') setImgY(prev => Math.min(500, prev + 25));
       if (dir === 'left') setImgX(prev => Math.max(10, prev - 15));
       if (dir === 'right') setImgX(prev => Math.min(500, prev + 15));
       if (dir === 'shrink') setImgScale(prev => Math.max(0.2, prev - 0.1));
       if (dir === 'grow') setImgScale(prev => Math.min(2.5, prev + 0.1));
+      if (dir === 'center') { setImgX(256); setImgY(256); }
+      if (dir === 'center-x') setImgX(256);
+      if (dir === 'center-y') setImgY(256);
     } else if (target === 'sticker' && selectedStickerId !== null) {
       setActiveStickers(activeStickers.map(st => {
         if (st.id === selectedStickerId) {
           let { x, y, scale } = st;
-          if (dir === 'up') y = Math.max(10, y - 15);
-          if (dir === 'down') y = Math.min(500, y + 15);
+          if (dir === 'up' || dir === 'subir') y = Math.max(10, y - 15);
+          if (dir === 'down' || dir === 'bajar') y = Math.min(500, y + 15);
           if (dir === 'left') x = Math.max(10, x - 15);
           if (dir === 'right') x = Math.min(500, x + 15);
           if (dir === 'shrink') scale = Math.max(0.3, scale - 0.15);
           if (dir === 'grow') scale = Math.min(3, scale + 0.15);
+          if (dir === 'center') { x = 256; y = 256; }
           return { ...st, x, y, scale };
         }
         return st;
@@ -737,19 +745,84 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
               </div>
 
               {uploadedImage && (
-                <div className="mt-2 p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex flex-col gap-1.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wide block">Controles de Imagen</span>
+                <div className="mt-3 p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex flex-col gap-3">
                   <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wide font-bold flex items-center gap-1.5">
+                      <Move className="w-3.5 h-3.5 text-indigo-400" />
+                      Posición & Centrado de Imagen
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateItemPosition('center', 'img')}
+                      className="px-2.5 py-1 bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 rounded-xl text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                      title="Centrar la imagen perfectamente"
+                    >
+                      <AlignCenter className="w-3.5 h-3.5 text-indigo-400" /> Centrar Imagen
+                    </button>
+                  </div>
+
+                  {/* Acciones Rápidas: Bajar, Subir, Centrar X/Y */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => updateItemPosition('bajar', 'img')}
+                      className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 text-xs rounded-xl border border-slate-800 text-slate-200 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+                      title="Bajar la imagen en la prenda/producto"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5 text-amber-400" /> Bajar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateItemPosition('subir', 'img')}
+                      className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 text-xs rounded-xl border border-slate-800 text-slate-200 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+                      title="Subir la imagen"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5 text-indigo-400" /> Subir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateItemPosition('center-x', 'img')}
+                      className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 text-xs rounded-xl border border-slate-800 text-slate-300 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+                      title="Centrar horizontalmente"
+                    >
+                      Centrar X
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateItemPosition('center-y', 'img')}
+                      className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 text-xs rounded-xl border border-slate-800 text-slate-300 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+                      title="Centrar verticalmente"
+                    >
+                      Centrar Y
+                    </button>
+                  </div>
+
+                  {/* Direccionales y Zoom */}
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-900">
                     <div className="flex gap-1">
-                      <button onClick={() => updateItemPosition('left', 'img')} className="px-2 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded border border-slate-800 text-slate-300">←</button>
-                      <button onClick={() => updateItemPosition('down', 'img')} className="px-2 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded border border-slate-800 text-slate-300">↓</button>
-                      <button onClick={() => updateItemPosition('up', 'img')} className="px-2 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded border border-slate-800 text-slate-300">↑</button>
-                      <button onClick={() => updateItemPosition('right', 'img')} className="px-2 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded border border-slate-800 text-slate-300">→</button>
+                      <button onClick={() => updateItemPosition('left', 'img')} className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded-lg border border-slate-800 text-slate-300 cursor-pointer" title="Mover Izquierda">←</button>
+                      <button onClick={() => updateItemPosition('down', 'img')} className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded-lg border border-slate-800 text-slate-300 cursor-pointer" title="Bajar">↓</button>
+                      <button onClick={() => updateItemPosition('up', 'img')} className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded-lg border border-slate-800 text-slate-300 cursor-pointer" title="Subir">↑</button>
+                      <button onClick={() => updateItemPosition('right', 'img')} className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded-lg border border-slate-800 text-slate-300 cursor-pointer" title="Mover Derecha">→</button>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => updateItemPosition('shrink', 'img')} className="px-2 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded border border-slate-800 text-slate-300"><ZoomOut className="w-3 h-3 inline"/></button>
-                      <button onClick={() => updateItemPosition('grow', 'img')} className="px-2 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded border border-slate-800 text-slate-300"><ZoomIn className="w-3 h-3 inline"/></button>
+                      <button onClick={() => updateItemPosition('shrink', 'img')} className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded-lg border border-slate-800 text-slate-300 cursor-pointer" title="Reducir"><ZoomOut className="w-3.5 h-3.5 inline"/></button>
+                      <button onClick={() => updateItemPosition('grow', 'img')} className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-xs rounded-lg border border-slate-800 text-slate-300 cursor-pointer" title="Agrandar"><ZoomIn className="w-3.5 h-3.5 inline"/></button>
                     </div>
+                  </div>
+
+                  {/* Slider de Posición Vertical Y (Bajar / Subir) */}
+                  <div className="flex items-center gap-2 pt-1 border-t border-slate-900">
+                    <span className="text-[10px] text-slate-400 shrink-0 font-medium">Bajar / Subir (Y):</span>
+                    <input
+                      type="range"
+                      min={30}
+                      max={480}
+                      value={imgY}
+                      onChange={e => setImgY(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
+                    />
+                    <span className="text-[10px] font-mono text-slate-400 w-8 text-right font-bold">{imgY}px</span>
                   </div>
                 </div>
               )}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Check, ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
+import { Palette, Check, ZoomIn, ZoomOut, RotateCcw, Maximize2, Move, ArrowDown, ArrowUp, AlignCenter, ArrowLeft, ArrowRight } from 'lucide-react';
 
 export interface ProductPreviewProps {
   imageDataUrl: string | null;
@@ -11,6 +11,11 @@ export interface ProductPreviewProps {
   imageScale?: number;
   onImageScaleChange?: (scale: number) => void;
   showScaleControl?: boolean;
+  imageOffsetY?: number;
+  onImageOffsetYChange?: (offsetY: number) => void;
+  imageOffsetX?: number;
+  onImageOffsetXChange?: (offsetX: number) => void;
+  showPositionControls?: boolean;
 }
 
 export const PRESET_COLORS = [
@@ -35,12 +40,21 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   imageScale: externalScale,
   onImageScaleChange,
   showScaleControl = true,
+  imageOffsetY: externalOffsetY,
+  onImageOffsetYChange,
+  imageOffsetX: externalOffsetX,
+  onImageOffsetXChange,
+  showPositionControls = true,
 }) => {
   const [internalColor, setInternalColor] = useState('#ffffff');
   const [internalScale, setInternalScale] = useState(1.0);
+  const [internalOffsetY, setInternalOffsetY] = useState(0);
+  const [internalOffsetX, setInternalOffsetX] = useState(0);
 
   const currentColor = externalColor !== undefined ? externalColor : internalColor;
   const currentScale = externalScale !== undefined ? externalScale : internalScale;
+  const currentOffsetY = externalOffsetY !== undefined ? externalOffsetY : internalOffsetY;
+  const currentOffsetX = externalOffsetX !== undefined ? externalOffsetX : internalOffsetX;
 
   const handleSelectColor = (hex: string) => {
     setInternalColor(hex);
@@ -55,6 +69,23 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
     if (onImageScaleChange) {
       onImageScaleChange(clamped);
     }
+  };
+
+  const handleOffsetYChange = (y: number) => {
+    const clamped = Math.min(80, Math.max(-80, Math.round(y)));
+    setInternalOffsetY(clamped);
+    if (onImageOffsetYChange) onImageOffsetYChange(clamped);
+  };
+
+  const handleOffsetXChange = (x: number) => {
+    const clamped = Math.min(80, Math.max(-80, Math.round(x)));
+    setInternalOffsetX(clamped);
+    if (onImageOffsetXChange) onImageOffsetXChange(clamped);
+  };
+
+  const handleCenterImage = () => {
+    handleOffsetYChange(0);
+    handleOffsetXChange(0);
   };
 
   // Determine light vs dark color for contrast calculations
@@ -75,12 +106,12 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   const innerMugColor = isLight ? '#334155' : '#0f172a';
   const brandingTextColor = isLight ? '#475569' : '#94a3b8';
 
-  // Helper to compute scaled image dimensions and centered positions
+  // Helper to compute scaled image dimensions and centered positions with offsets
   const getScaledImg = (baseW: number, baseH: number, centerX: number, centerY: number) => {
     const w = baseW * currentScale;
     const h = baseH * currentScale;
-    const x = centerX - w / 2;
-    const y = centerY - h / 2;
+    const x = centerX - w / 2 + currentOffsetX;
+    const y = centerY - h / 2 + currentOffsetY;
     return { x, y, w, h };
   };
 
@@ -380,6 +411,75 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Image Position Controls (Bajar, Subir, Centrar) */}
+      {showScaleControl && showPositionControls !== false && imageDataUrl && (
+        <div className="w-full bg-slate-950/70 backdrop-blur-md rounded-2xl p-3 border border-slate-800/80 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between w-full text-xs font-bold text-slate-300 px-1">
+            <span className="flex items-center gap-1.5 text-indigo-400">
+              <Move className="w-4 h-4 text-indigo-400" />
+              Posición & Centrado de Imagen
+            </span>
+            <button
+              type="button"
+              onClick={handleCenterImage}
+              className="text-[10px] bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition cursor-pointer"
+              title="Centrar la imagen"
+            >
+              <AlignCenter className="w-3.5 h-3.5 text-indigo-400" /> Centrar Imagen
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleOffsetYChange(currentOffsetY + 15)}
+              className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs text-slate-200 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+              title="Bajar la imagen"
+            >
+              <ArrowDown className="w-3.5 h-3.5 text-amber-400" /> Bajar
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOffsetYChange(currentOffsetY - 15)}
+              className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs text-slate-200 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+              title="Subir la imagen"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-indigo-400" /> Subir
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOffsetXChange(currentOffsetX - 15)}
+              className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs text-slate-200 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+              title="Mover a la izquierda"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Izq.
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOffsetXChange(currentOffsetX + 15)}
+              className="px-2 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs text-slate-200 font-semibold flex items-center justify-center gap-1 transition cursor-pointer"
+              title="Mover a la derecha"
+            >
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" /> Der.
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1 border-t border-slate-900 px-1">
+            <span className="text-[10px] text-slate-400 shrink-0 font-medium">Bajar / Subir (Y):</span>
+            <input
+              type="range"
+              min="-80"
+              max="80"
+              step="2"
+              value={currentOffsetY}
+              onChange={e => handleOffsetYChange(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
+            />
+            <span className="text-[10px] font-mono text-slate-400 w-8 text-right font-bold">{currentOffsetY}px</span>
           </div>
         </div>
       )}
