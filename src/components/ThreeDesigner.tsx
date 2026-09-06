@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Upload, Type, Smile, Palette, ShoppingCart, RefreshCw, ZoomIn, ZoomOut, Check, Move, ArrowDown, ArrowUp, AlignCenter, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Upload, Type, Smile, Palette, ShoppingCart, RefreshCw, ZoomIn, ZoomOut, Check, Move, ArrowDown, ArrowUp, AlignCenter, ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Database, CartItem, Producto } from '../services/database';
+import { validateAndSanitizeImageFile } from '../utils/fileSecurity';
 
 interface ThreeDesignerProps {
   producto: Producto;
@@ -468,20 +469,23 @@ export const ThreeDesigner: React.FC<ThreeDesignerProps> = ({ producto, onAddToC
     };
   }, [producto, isRotating]);
 
-  // Image Upload Handler
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image Upload Handler with Anti-Virus Security Scan
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setUploadedImage(event.target.result as string);
-          setImgScale(1);
-          setImgX(256);
-          setImgY(180);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const scanResult = await validateAndSanitizeImageFile(file);
+    if (!scanResult.safe) {
+      alert(`🛡️ BLOQUEO DE SEGURIDAD SUBLIMAX:\n\n${scanResult.error}`);
+      e.target.value = '';
+      return;
+    }
+
+    if (scanResult.sanitizedDataUrl) {
+      setUploadedImage(scanResult.sanitizedDataUrl);
+      setImgScale(1);
+      setImgX(256);
+      setImgY(180);
     }
   };
 

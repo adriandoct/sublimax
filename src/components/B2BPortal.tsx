@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FileText, Calculator, Upload, Check, Printer, FileDown, Star } from 'lucide-react';
+import { FileText, Calculator, Upload, Check, Printer, FileDown, Star, ShieldCheck } from 'lucide-react';
 import { Database, Producto } from '../services/database';
+import { validateAndSanitizeImageFile } from '../utils/fileSecurity';
 
 interface B2BPortalProps {
   products: Producto[];
@@ -50,14 +51,19 @@ export const B2BPortal: React.FC<B2BPortalProps> = ({ products }) => {
   const taxAmount = subtotalAfterDiscount * 0.16; // 16% IVA Mexican Tax
   const finalTotal = subtotalAfterDiscount + taxAmount;
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) setLogoFile(event.target.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const scanResult = await validateAndSanitizeImageFile(file);
+    if (!scanResult.safe) {
+      alert(`🛡️ BLOQUEO DE SEGURIDAD SUBLIMAX:\n\n${scanResult.error}`);
+      e.target.value = '';
+      return;
+    }
+
+    if (scanResult.sanitizedDataUrl) {
+      setLogoFile(scanResult.sanitizedDataUrl);
     }
   };
 

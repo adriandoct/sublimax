@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Database, Diseño, Usuario, CartItem } from '../services/database';
 import { ProductPreview } from './ProductPreview';
+import { validateAndSanitizeImageFile } from '../utils/fileSecurity';
 import {
   Sparkles, Upload, Check, Loader, Award, X,
   Eye, Palette, ImagePlus, UserPlus, LogIn, ShieldCheck,
   TrendingUp, DollarSign, Package, ClipboardList, CheckCircle2,
-  XCircle, Clock, Users, AlertCircle, Bell, Pencil, Trash2, ShoppingCart
+  XCircle, Clock, Users, AlertCircle, Bell, Pencil, Trash2, ShoppingCart, Lock
 } from 'lucide-react';
 
 interface DesignerMarketplaceProps {
@@ -280,23 +281,21 @@ const EditDesignModal: React.FC<EditDesignModalProps> = ({ design, onClose, onSa
   const unitPrice = basePrice + Number(editPrice || 0);
   const totalOrderToPay = unitPrice * editQuantity;
 
-  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('Solo se permiten archivos de imagen.');
+
+    const scanResult = await validateAndSanitizeImageFile(file);
+    if (!scanResult.safe) {
+      alert(`🛡️ BLOQUEO DE SEGURIDAD SUBLIMAX:\n\n${scanResult.error}`);
+      if (editFileInputRef.current) editFileInputRef.current.value = '';
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      alert('La imagen no debe superar 8 MB.');
-      return;
+
+    if (scanResult.sanitizedDataUrl) {
+      setEditFileName(file.name);
+      setEditImageUrl(scanResult.sanitizedDataUrl);
     }
-    setEditFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = ev => {
-      setEditImageUrl(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e?: React.SyntheticEvent) => {
@@ -624,60 +623,49 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     }
   }, [currentUser]);
 
-  /* ── File picker handler (supports batch selection) ── */
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* ── File picker handler (supports batch selection & anti-virus scanning) ── */
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const validFiles = files.filter(file => {
-      if (!file.type.startsWith('image/')) {
-        alert(`El archivo "${file.name}" no es una imagen válida (PNG, JPG, SVG).`);
-        return false;
-      }
-      if (file.size > 12 * 1024 * 1024) {
-        alert(`El archivo "${file.name}" supera los 12 MB.`);
-        return false;
-      }
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
-
     const loadedEntries: Array<{ dataUrl: string; fileName: string }> = [];
-    let processed = 0;
 
-    validFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        if (ev.target?.result) {
-          loadedEntries.push({
-            dataUrl: ev.target.result as string,
-            fileName: file.name
-          });
-        }
-        processed++;
-        if (processed === validFiles.length) {
-          setImagesList(prev => {
-            const next = [...prev, ...loadedEntries];
-            if (next.length > 0) {
-              setImageDataUrl(next[0].dataUrl);
-              setImageFileName(next[0].fileName);
-            }
-            return next;
-          });
-        }
-      };
-      reader.readAsDataURL(file);
+    for (const file of files) {
+      const scanResult = await validateAndSanitizeImageFile(file);
+      if (!scanResult.safe) {
+        alert(`🛡️ ALERTA DE SEGURIDAD SUBLIMAX:\n\n${scanResult.error}`);
+        continue;
+      }
+      if (scanResult.sanitizedDataUrl) {
+        loadedEntries.push({
+          dataUrl: scanResult.sanitizedDataUrl,
+          fileName: file.name
+        });
+      }
+    }
+
+    if (loadedEntries.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setImagesList(prev => {
+      const next = [...prev, ...loadedEntries];
+      if (next.length > 0) {
+        setImageDataUrl(next[0].dataUrl);
+        setImageFileName(next[0].fileName);
+      }
+      return next;
     });
   };
 
-  /* ── Drop zone drag-and-drop (supports batch drop) ── */
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  /* ── Drop zone drag-and-drop (supports batch drop & anti-virus scanning) ── */
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files || []);
     if (files.length === 0) return;
     const fakeEvent = { target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>;
-    handleFileChange(fakeEvent);
+    await handleFileChange(fakeEvent);
   };
 
   /* ── Helper: generate default design canvas ── */
@@ -1074,9 +1062,14 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
           {/* Form panel */}
           <div className="glass-panel rounded-3xl p-6 border-slate-800 flex flex-col gap-5">
             <div>
-              <h2 className="text-base font-bold text-white">Subir Nueva Plantilla de Diseño</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-white">Subir Nueva Plantilla de Diseño</h2>
+                <span className="flex items-center gap-1 text-[10px] bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-extrabold px-2.5 py-1 rounded-full shadow-sm">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Escáner Anti-Virus Activo
+                </span>
+              </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                PNG transparente o JPG de alta resolución recomendado.
+                PNG transparente o JPG de alta resolución recomendado. Archivos escaneados con verificación Magic Bytes.
               </p>
             </div>
 
