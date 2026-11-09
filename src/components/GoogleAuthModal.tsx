@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Database, Usuario, supabaseClient } from '../services/database';
-import { X, Sparkles, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface GoogleAuthModalProps {
   isOpen: boolean;
@@ -47,16 +47,6 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
       setErrorMsg(err?.message || 'Error iniciando sesión con Google');
       setIsLoading(false);
     }
-  };
-
-  const handleQuickPresetSelect = (email: string, name: string, avatar?: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const user = Database.loginWithGoogle(email, name, avatar);
-      setIsLoading(false);
-      onSuccess(user);
-      onClose();
-    }, 600);
   };
 
   const handleCustomSubmit = (e: React.FormEvent) => {
@@ -169,73 +159,14 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
             <div className="w-full border-t border-slate-800" />
           </div>
           <span className="relative px-3 bg-slate-900 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-            O selecciona una cuenta demo de Google
+            O ingresa con tu correo
           </span>
-        </div>
-
-        {/* Account Presets */}
-        <div className="flex flex-col gap-2.5 mb-6">
-          <button
-            onClick={() =>
-              handleQuickPresetSelect(
-                'diseñador.google@gmail.com',
-                'Diseñador Google Pro',
-                'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDesigner1'
-              )
-            }
-            className="w-full p-3 bg-slate-950/60 hover:bg-slate-950 border border-slate-800 hover:border-indigo-500/50 rounded-2xl transition flex items-center justify-between text-left group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs">
-                G1
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white group-hover:text-indigo-300 transition">
-                  diseñador.google@gmail.com
-                </h4>
-                <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Privilegios de Diseñador Pro
-                </span>
-              </div>
-            </div>
-            <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded-full font-bold">
-              Usar
-            </span>
-          </button>
-
-          <button
-            onClick={() =>
-              handleQuickPresetSelect(
-                'creador.studio@gmail.com',
-                'Creador Sublimax',
-                'https://api.dicebear.com/7.x/avataaars/svg?seed=GoogleDesigner2'
-              )
-            }
-            className="w-full p-3 bg-slate-950/60 hover:bg-slate-950 border border-slate-800 hover:border-indigo-500/50 rounded-2xl transition flex items-center justify-between text-left group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-xs">
-                G2
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-white group-hover:text-indigo-300 transition">
-                  creador.studio@gmail.com
-                </h4>
-                <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Privilegios de Diseñador Pro
-                </span>
-              </div>
-            </div>
-            <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded-full font-bold">
-              Usar
-            </span>
-          </button>
         </div>
 
         {/* Manual Google Email Entry */}
         <form onSubmit={handleCustomSubmit} className="flex flex-col gap-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            Ingresar correo alternativo de Google:
+            Correo de Google:
           </label>
           <div className="flex gap-2">
             <input

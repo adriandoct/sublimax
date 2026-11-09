@@ -11,7 +11,8 @@ import { ARPreview } from './components/ARPreview';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { 
   Sparkles, ShoppingCart, User, LogOut, Package, Star, 
-  Layers, Gift, Send, Briefcase, FileText, ChevronRight, X, Info
+  Layers, Gift, Send, Briefcase, FileText, ChevronRight, X, Info,
+  ShieldCheck, Lock
 } from 'lucide-react';
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [showArPreview, setShowArPreview] = useState(false);
   const [isGoogleAuthOpen, setIsGoogleAuthOpen] = useState(false);
+  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -43,10 +45,19 @@ export default function App() {
   // Initial Seed & Load
   useEffect(() => {
     Database.initialize();
+    
+    // SEGURIDAD: Al abrir la aplicación, garantizar que NUNCA inicie con el administrador activo
+    const active = Database.getActiveUser();
+    if (active?.role === 'admin') {
+      Database.logout();
+      setCurrentUser(null);
+    } else {
+      setCurrentUser(active);
+    }
+
     setProducts(Database.getProducts());
     setCategories(Database.getCategories());
     setCart(Database.getCart());
-    setCurrentUser(Database.getActiveUser());
 
     // Listen for Supabase auth state change if Supabase is active
     if (supabaseClient) {
@@ -77,9 +88,10 @@ export default function App() {
       setCurrentUser(user);
       setLoginEmail('');
       setLoginPassword('');
+      setIsAdminLoginModalOpen(false);
       if (user.role === 'admin') setActiveTab('admin');
     } else {
-      setAuthError('Credenciales inválidas para administrador o error en el sistema.');
+      setAuthError('Credenciales incorrectas. Verifique correo y contraseña.');
     }
   };
 
@@ -87,14 +99,6 @@ export default function App() {
     Database.logout();
     setCurrentUser(null);
     setActiveTab('catalog');
-  };
-
-  const autoLoginAdmin = () => {
-    const user = Database.login('admin@admin.com', '12345678Cecyte');
-    if (user) {
-      setCurrentUser(user);
-      setActiveTab('admin');
-    }
   };
 
   // --- Cart Handlers ---
@@ -287,39 +291,6 @@ export default function App() {
                 </svg>
                 <span className="hidden md:inline">Google (Diseñador)</span>
               </button>
-
-              <button 
-                onClick={autoLoginAdmin}
-                className="px-3 py-1.5 bg-red-950/50 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl text-[10px] font-bold"
-              >
-                Prueba Admin
-              </button>
-              
-              {/* Quick Login Form inline */}
-              <form onSubmit={handleLogin} className="hidden lg:flex gap-1.5 items-center">
-                <input
-                  type="email"
-                  required
-                  placeholder="admin@admin.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="bg-slate-950 border border-slate-900 rounded-xl px-2.5 py-1.5 text-[10px] text-white focus:outline-none w-28"
-                />
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="bg-slate-950 border border-slate-900 rounded-xl px-2.5 py-1.5 text-[10px] text-white focus:outline-none w-20"
-                />
-                <button 
-                  type="submit"
-                  className="p-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white"
-                >
-                  <User className="w-3.5 h-3.5" />
-                </button>
-              </form>
             </div>
           )}
 
@@ -883,6 +854,93 @@ export default function App() {
         </div>
       )}
 
+      {/* Admin Login Modal (Acceso Seguro) */}
+      {isAdminLoginModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+          <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
+            {/* Ambient glow */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-red-500/20 via-orange-500/20 to-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setIsAdminLoginModalOpen(false);
+                setAuthError('');
+              }}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-red-950/40 border border-red-900/40 rounded-2xl mb-3 shadow-lg text-red-400">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black text-white">Acceso de Administrador</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Por motivos de seguridad, ingresa tus credenciales autorizadas para gestionar la tienda.
+              </p>
+            </div>
+
+            {authError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-950/50 border border-red-900/50 text-red-300 text-xs text-center font-medium">
+                {authError}
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@admin.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAdminLoginModalOpen(false);
+                    setAuthError('');
+                  }}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 text-xs font-bold transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-950/50 transition cursor-pointer"
+                >
+                  Iniciar Sesión
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Google Auth Modal */}
       <GoogleAuthModal
         isOpen={isGoogleAuthOpen}
@@ -896,9 +954,20 @@ export default function App() {
       />
 
       {/* FOOTER STATS */}
-      <footer className="border-t border-slate-900/60 bg-slate-950/20 py-8 text-center text-xs text-slate-600 flex flex-col gap-2 mt-12">
+      <footer className="border-t border-slate-900/60 bg-slate-950/20 py-8 text-center text-xs text-slate-600 flex flex-col gap-2 mt-12 items-center">
         <p>© 2026 SUBLIMAX Studio - Personaliza tu imaginación. Todos los derechos reservados.</p>
         <p className="text-[10px] text-slate-700">Next.js 15 + React + TypeScript + Three.js + Supabase client simulator.</p>
+        <button
+          onClick={() => {
+            setIsAdminLoginModalOpen(true);
+            setAuthError('');
+          }}
+          className="text-[10px] text-slate-700 hover:text-slate-400 transition flex items-center gap-1 cursor-pointer mt-1"
+          title="Acceso administrativo protegido"
+        >
+          <Lock className="w-2.5 h-2.5" />
+          <span>Acceso administrativo</span>
+        </button>
       </footer>
     </div>
   );

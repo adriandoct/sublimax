@@ -417,6 +417,19 @@ export class Database {
       if (desUpdated) {
         localStorage.setItem('sublimax_diseños', JSON.stringify(currentDesigns));
       }
+
+      // SEGURIDAD: Purgar cualquier sesión persistente de administrador en localStorage
+      try {
+        const rawActive = localStorage.getItem('sublimax_active_user');
+        if (rawActive) {
+          const parsed = JSON.parse(rawActive);
+          if (parsed?.role === 'admin') {
+            localStorage.removeItem('sublimax_active_user');
+          }
+        }
+      } catch {
+        localStorage.removeItem('sublimax_active_user');
+      }
       return;
     }
 
@@ -447,8 +460,36 @@ export class Database {
   // --- Auth API ---
   static getActiveUser(): Usuario | null {
     this.initialize();
-    const user = localStorage.getItem('sublimax_active_user');
-    return user ? JSON.parse(user) : null;
+
+    // 1. Revisar si hay una sesión activa en sessionStorage (solo durante la pestaña actual)
+    try {
+      const sessionUser = sessionStorage.getItem('sublimax_active_user');
+      if (sessionUser) {
+        const parsed = JSON.parse(sessionUser);
+        if (parsed) return parsed;
+      }
+    } catch {
+      sessionStorage.removeItem('sublimax_active_user');
+    }
+
+    // 2. Revisar localStorage para usuarios regulares o diseñadores
+    try {
+      const userStr = localStorage.getItem('sublimax_active_user');
+      if (userStr) {
+        const user: Usuario = JSON.parse(userStr);
+        // SEGURIDAD CRÍTICA: La cuenta de administrador NUNCA debe persistir en localStorage ni 
+        // restaurarse automáticamente al abrir la aplicación. Se purga de inmediato.
+        if (user?.role === 'admin') {
+          localStorage.removeItem('sublimax_active_user');
+          return null;
+        }
+        return user;
+      }
+    } catch {
+      localStorage.removeItem('sublimax_active_user');
+    }
+
+    return null;
   }
 
   static login(email: string, pass: string): Usuario | null {
@@ -464,7 +505,11 @@ export class Database {
         fecha_registro: '2026-05-01',
         avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin'
       };
-      localStorage.setItem('sublimax_active_user', JSON.stringify(admin));
+      // SEGURIDAD: Guardar la sesión de administrador ÚNICAMENTE en sessionStorage.
+      // Se destruye automáticamente al cerrar la pestaña o el navegador, asegurando que
+      // la aplicación nunca se vuelva a abrir con el administrador activo.
+      sessionStorage.setItem('sublimax_active_user', JSON.stringify(admin));
+      localStorage.removeItem('sublimax_active_user');
       return admin;
     }
 
@@ -485,12 +530,19 @@ export class Database {
       users.push(user);
       localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
     }
-    localStorage.setItem('sublimax_active_user', JSON.stringify(user));
+    
+    if (user.role === 'admin') {
+      sessionStorage.setItem('sublimax_active_user', JSON.stringify(user));
+      localStorage.removeItem('sublimax_active_user');
+    } else {
+      localStorage.setItem('sublimax_active_user', JSON.stringify(user));
+    }
     return user;
   }
 
   static logout() {
-    localStorage.setItem('sublimax_active_user', JSON.stringify(null));
+    sessionStorage.removeItem('sublimax_active_user');
+    localStorage.removeItem('sublimax_active_user');
   }
 
   /**
