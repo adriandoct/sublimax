@@ -37,7 +37,8 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [showArPreview, setShowArPreview] = useState(false);
   const [isGoogleAuthOpen, setIsGoogleAuthOpen] = useState(false);
-  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -80,18 +81,29 @@ export default function App() {
   };
 
   // --- Auth Handlers ---
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    const user = Database.login(loginEmail, loginPassword);
-    if (user) {
-      setCurrentUser(user);
-      setLoginEmail('');
-      setLoginPassword('');
-      setIsAdminLoginModalOpen(false);
-      if (user.role === 'admin') setActiveTab('admin');
-    } else {
-      setAuthError('Credenciales incorrectas. Verifique correo y contraseña.');
+    setIsLoggingIn(true);
+    try {
+      const user = await Database.login(loginEmail, loginPassword);
+      if (user) {
+        setCurrentUser(user);
+        setLoginEmail('');
+        setLoginPassword('');
+        setIsLoginModalOpen(false);
+        if (user.role === 'admin') {
+          setActiveTab('admin');
+        } else {
+          setActiveTab('catalog');
+        }
+      } else {
+        setAuthError('Correo o contraseña incorrectos. Verifica tus credenciales.');
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || 'Error al iniciar sesión.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -283,7 +295,7 @@ export default function App() {
               <button
                 onClick={() => setIsGoogleAuthOpen(true)}
                 className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-black shadow-lg transition flex items-center gap-2 border border-slate-200 cursor-pointer"
-                title="Iniciar sesión con Google (Rol de Diseñador)"
+                title="Iniciar sesión con Google"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
@@ -291,7 +303,20 @@ export default function App() {
                   <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/>
                   <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
                 </svg>
-                <span className="hidden md:inline">Google (Diseñador)</span>
+                <span className="hidden md:inline">Google</span>
+              </button>
+
+              {/* Botón de Inicio de Sesión estándar con Correo y Contraseña */}
+              <button 
+                onClick={() => {
+                  setIsLoginModalOpen(true);
+                  setAuthError('');
+                }}
+                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                title="Iniciar sesión con correo y contraseña"
+              >
+                <User className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Iniciar Sesión</span>
               </button>
             </div>
           )}
@@ -856,17 +881,17 @@ export default function App() {
         </div>
       )}
 
-      {/* Admin Login Modal (Acceso Seguro) */}
-      {isAdminLoginModalOpen && (
+      {/* Login Modal (Acceso con Usuario y Contraseña) */}
+      {isLoginModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
           <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
             {/* Ambient glow */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-red-500/20 via-orange-500/20 to-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-2xl pointer-events-none" />
 
             {/* Close Button */}
             <button
               onClick={() => {
-                setIsAdminLoginModalOpen(false);
+                setIsLoginModalOpen(false);
                 setAuthError('');
               }}
               className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition cursor-pointer"
@@ -876,12 +901,12 @@ export default function App() {
 
             {/* Modal Header */}
             <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-red-950/40 border border-red-900/40 rounded-2xl mb-3 shadow-lg text-red-400">
-                <ShieldCheck className="w-7 h-7" />
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-indigo-950/50 border border-indigo-900/40 rounded-2xl mb-3 shadow-lg text-indigo-400">
+                <User className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-black text-white">Acceso de Administrador</h3>
+              <h3 className="text-xl font-black text-white">Iniciar Sesión</h3>
               <p className="text-xs text-slate-400 mt-1">
-                Por motivos de seguridad, ingresa tus credenciales autorizadas para gestionar la tienda.
+                Ingresa con cualquier correo y contraseña para acceder a tu cuenta o panel
               </p>
             </div>
 
@@ -899,10 +924,10 @@ export default function App() {
                 <input
                   type="email"
                   required
-                  placeholder="admin@admin.com"
+                  placeholder="tu@correo.com o admin@admin.com"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition"
                 />
               </div>
 
@@ -916,7 +941,7 @@ export default function App() {
                   placeholder="••••••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-red-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition"
                 />
               </div>
 
@@ -924,7 +949,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    setIsAdminLoginModalOpen(false);
+                    setIsLoginModalOpen(false);
                     setAuthError('');
                   }}
                   className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 text-xs font-bold transition cursor-pointer"
@@ -933,9 +958,10 @@ export default function App() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-950/50 transition cursor-pointer"
+                  disabled={isLoggingIn}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-950/50 transition cursor-pointer flex items-center justify-center gap-2"
                 >
-                  Iniciar Sesión
+                  {isLoggingIn ? 'Verificando...' : 'Iniciar Sesión'}
                 </button>
               </div>
             </form>
@@ -958,14 +984,14 @@ export default function App() {
         <p className="text-[10px] text-slate-700">Next.js 15 + React + TypeScript + Three.js + Supabase client simulator.</p>
         <button
           onClick={() => {
-            setIsAdminLoginModalOpen(true);
+            setIsLoginModalOpen(true);
             setAuthError('');
           }}
           className="text-[10px] text-slate-700 hover:text-slate-400 transition flex items-center gap-1 cursor-pointer mt-1"
-          title="Acceso administrativo protegido"
+          title="Iniciar sesión con correo y contraseña"
         >
           <Lock className="w-2.5 h-2.5" />
-          <span>Acceso administrativo</span>
+          <span>Acceso con correo y contraseña</span>
         </button>
       </footer>
     </div>

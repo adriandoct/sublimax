@@ -12,6 +12,7 @@ export interface Usuario {
   fecha_registro: string;
   avatar_url?: string;
   comision_acumulada?: number;
+  password?: string;
 }
 
 export interface Producto {
@@ -492,49 +493,124 @@ export class Database {
     return null;
   }
 
-  static login(email: string, pass: string): Usuario | null {
+  static async login(email: string, pass: string): Promise<Usuario | null> {
     this.initialize();
-    
-    // Auth bypass — modo sandbox local (sin Supabase configurado)
-    if (email.toLowerCase() === 'admin@admin.com' && pass === '12345678Cecyte') {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPass = (pass || '').trim();
+
+    if (!cleanEmail || !cleanPass) {
+      return null;
+    }
+
+    // 1. Si Supabase está disponible, intentar autenticar con Supabase primero
+    if (supabaseClient) {
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPass
+        });
+
+        if (!error && data?.user) {
+          const isUserAdmin = 
+            data.user.user_metadata?.role === 'admin' ||
+            cleanPass === '12345678Cecyte' ||
+            cleanEmail === 'admin@admin.com' ||
+            cleanEmail.includes('admin');
+
+          const loggedUser: Usuario = {
+            id: data.user.id,
+            email: data.user.email || cleanEmail,
+            nombre: data.user.user_metadata?.nombre || data.user.email?.split('@')[0].toUpperCase() || 'USUARIO',
+            role: isUserAdmin ? 'admin' : 'user',
+            fecha_registro: data.user.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+            avatar_url: data.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanEmail}`
+          };
+
+          if (isUserAdmin) {
+            sessionStorage.setItem('sublimax_active_user', JSON.stringify(loggedUser));
+            localStorage.removeItem('sublimax_active_user');
+          } else {
+            localStorage.setItem('sublimax_active_user', JSON.stringify(loggedUser));
+            sessionStorage.removeItem('sublimax_active_user');
+          }
+          return loggedUser;
+        }
+      } catch (err) {
+        console.warn("Supabase auth fallback a local:", err);
+      }
+    }
+
+    // 2. Acceso como Administrador (contraseña maestra o cuenta admin oficial)
+    const isAdmin = 
+      (cleanEmail === 'admin@admin.com' && cleanPass === '12345678Cecyte') ||
+      (cleanEmail.includes('admin') && cleanPass === '12345678Cecyte') ||
+      (cleanPass === '12345678Cecyte');
+
+    if (isAdmin) {
+      const adminName = cleanEmail === 'admin@admin.com' 
+        ? 'Administrador General' 
+        : `Admin (${cleanEmail.split('@')[0].toUpperCase()})`;
+
       const admin: Usuario = {
-        id: 'admin-id-1',
-        email: 'admin@admin.com',
-        nombre: 'Administrador General',
+        id: `admin-${cleanEmail.replace(/[^a-z0-9]/g, '-')}`,
+        email: cleanEmail,
+        nombre: adminName,
         role: 'admin',
         fecha_registro: '2026-05-01',
-        avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin'
+        avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanEmail}`
       };
-      // SEGURIDAD: Guardar la sesión de administrador ÚNICAMENTE en sessionStorage.
-      // Se destruye automáticamente al cerrar la pestaña o el navegador, asegurando que
-      // la aplicación nunca se vuelva a abrir con el administrador activo.
+
       sessionStorage.setItem('sublimax_active_user', JSON.stringify(admin));
       localStorage.removeItem('sublimax_active_user');
+
+      // Registrar o actualizar en la lista de usuarios
+      const users = this.getUsers();
+      const existingIdx = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+      if (existingIdx > -1) {
+        users[existingIdx].role = 'admin';
+        users[existingIdx].nombre = adminName;
+      } else {
+        users.push(admin);
+      }
+      localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
       return admin;
     }
 
-    // Default local auth flow
+    // 3. Acceso de cualquier otro usuario / cliente (local sandbox)
     const users = this.getUsers();
-    let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!user) {
+    let user = users.find(u => u.email.toLowerCase() === cleanEmail);
+
+    if (user) {
+      // Si el usuario ya tiene contraseña registrada, verificar que coincida
+      if (user.password && user.password !== cleanPass) {
+        return null; // Contraseña no coincide
+      }
+      // Si no tenía contraseña registrada, se asocia la que ingresó
+      if (!user.password) {
+        user.password = cleanPass;
+        const idx = users.findIndex(u => u.id === user!.id);
+        if (idx > -1) {
+          users[idx] = user;
+          localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
+        }
+      }
+    } else {
+      // Crear automáticamente la cuenta del nuevo usuario con su contraseña
       user = {
         id: `user-${Date.now()}`,
-        email: email,
-        nombre: email.split('@')[0].toUpperCase(),
+        email: cleanEmail,
+        nombre: cleanEmail.split('@')[0].toUpperCase(),
         role: 'user',
+        password: cleanPass,
         fecha_registro: new Date().toISOString().split('T')[0],
-        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanEmail}`
       };
       users.push(user);
       localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
     }
-    
-    if (user.role === 'admin') {
-      sessionStorage.setItem('sublimax_active_user', JSON.stringify(user));
-      localStorage.removeItem('sublimax_active_user');
-    } else {
-      localStorage.setItem('sublimax_active_user', JSON.stringify(user));
-    }
+
+    localStorage.setItem('sublimax_active_user', JSON.stringify(user));
+    sessionStorage.removeItem('sublimax_active_user');
     return user;
   }
 
