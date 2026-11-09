@@ -774,173 +774,31 @@ export const DesignerMarketplace: React.FC<DesignerMarketplaceProps> = ({
     }
   };
 
-  /* ── Join as designer (promote existing user) ── */
-  const handleJoinProgram = () => {
-    if (!currentUser) return;
-    const users = Database.getUsers();
-    const idx = users.findIndex(u => u.id === currentUser.id);
-    if (idx > -1) {
-      users[idx].role = 'designer';
-      users[idx].comision_acumulada = 0;
-      localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
-      localStorage.setItem('sublimax_active_user', JSON.stringify(users[idx]));
-      onRefreshUser();
-    }
-  };
-
   /* ── Stats ── */
   const totalSalesCount = designs.reduce((s, d) => s + d.ventas, 0);
   const totalCommissions = designs.reduce((s, d) => s + d.ventas * (d.precio + 20) * 0.15, 0);
 
   /* ═══════════════════════════════════════════
-     RENDER: Not logged in
+     ACCESO RESTRINGIDO: Solo Administradores
   ═══════════════════════════════════════════ */
-  if (!currentUser) {
+  if (!currentUser || currentUser.role !== 'admin') {
     return (
-      <>
-        {showRegister && (
-          <RegisterModal
-            onClose={() => setShowRegister(false)}
-            onSuccess={user => {
-              onRefreshUser();
-              setShowRegister(false);
-            }}
-          />
-        )}
-
-        <div className="flex flex-col items-center gap-8 py-8">
-          {/* Hero banner */}
-          <div className="relative w-full max-w-3xl glass-panel rounded-3xl p-10 border border-indigo-500/20 overflow-hidden text-center">
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/20 via-transparent to-pink-900/15 pointer-events-none" />
-
-            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-xl shadow-indigo-950/50">
-              <Sparkles className="w-10 h-10 text-white animate-pulse" />
-            </div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-white mb-3">
-              Comunidad de{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400">
-                Creadores
-              </span>
-            </h1>
-            <p className="text-slate-300 text-sm mb-8 max-w-lg mx-auto leading-relaxed">
-              Monetiza tu creatividad. Sube tus diseños, configura tus regalías y gana
-              <span className="text-emerald-400 font-bold"> comisiones del 15%</span> por cada
-              producto vendido con tu arte en SUBLIMAX Studio.
-            </p>
-
-            {/* Steps */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-left">
-              {[
-                {
-                  step: '01',
-                  color: 'text-indigo-400',
-                  title: 'Regístrate gratis',
-                  desc: 'Crea tu cuenta con rol de Diseñador en segundos.',
-                  icon: <UserPlus className="w-5 h-5" />,
-                },
-                {
-                  step: '02',
-                  color: 'text-pink-400',
-                  title: 'Sube tu diseño',
-                  desc: 'Carga archivos PNG, JPG o SVG de alta resolución.',
-                  icon: <ImagePlus className="w-5 h-5" />,
-                },
-                {
-                  step: '03',
-                  color: 'text-emerald-400',
-                  title: 'Gana comisiones',
-                  desc: '15% garantizado sobre cada venta con tu arte.',
-                  icon: <DollarSign className="w-5 h-5" />,
-                },
-              ].map(s => (
-                <div key={s.step} className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
-                  <div className={`${s.color} mb-2 flex items-center gap-2`}>
-                    {s.icon}
-                    <span className="text-xs font-extrabold uppercase tracking-widest">{s.step}</span>
-                  </div>
-                  <span className="text-xs text-white font-bold block mb-1">{s.title}</span>
-                  <span className="text-[11px] text-slate-500 leading-relaxed">{s.desc}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                id="open-register-modal-btn"
-                onClick={() => setShowRegister(true)}
-                className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-indigo-950/40 flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" /> Crear Cuenta de Diseñador
-              </button>
-              <button
-                id="login-cta-btn"
-                onClick={() => {
-                  // Scroll to header login
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="px-8 py-3.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold rounded-2xl text-sm transition flex items-center justify-center gap-2"
-              >
-                <LogIn className="w-4 h-4" /> Ya tengo cuenta — Iniciar Sesión
-              </button>
-            </div>
+      <div className="flex flex-col items-center gap-8 py-10">
+        <div className="w-full max-w-xl glass-panel rounded-3xl p-8 border border-red-900/30 text-center">
+          <div className="w-16 h-16 bg-red-950/50 border border-red-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-400">
+            <Lock className="w-8 h-8" />
           </div>
-
-          {/* Public approved designs showcase */}
-          <PublicDesignsGrid />
+          <h2 className="text-xl font-black text-white mb-2">
+            Acceso Exclusivo para Administradores
+          </h2>
+          <p className="text-slate-400 text-xs max-w-md mx-auto leading-relaxed mb-2">
+            La creación y subida de nuevas plantillas de diseño está reservada únicamente para administradores autorizados de SUBLIMAX Studio.
+          </p>
         </div>
-      </>
-    );
-  }
 
-  /* ═══════════════════════════════════════════
-     RENDER: Logged in but NOT a designer/admin
-  ═══════════════════════════════════════════ */
-  if (!isDesignerOrAdmin) {
-    return (
-      <>
-        {showRegister && (
-          <RegisterModal
-            onClose={() => setShowRegister(false)}
-            onSuccess={() => {
-              onRefreshUser();
-              setShowRegister(false);
-            }}
-          />
-        )}
-
-        <div className="flex flex-col items-center gap-8 py-4">
-          <div className="w-full max-w-2xl glass-panel rounded-3xl p-8 border border-indigo-500/20 text-center">
-            <Award className="w-14 h-14 text-indigo-400 mx-auto mb-4 animate-pulse" />
-            <h2 className="text-2xl font-extrabold text-white mb-2">
-              Conviértete en Diseñador de SUBLIMAX
-            </h2>
-            <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-              Tu cuenta actual es de cliente. Activa el modo diseñador para comenzar a subir
-              tu arte y ganar comisiones automáticas.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                id="activate-designer-btn"
-                onClick={handleJoinProgram}
-                className="px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl text-sm transition shadow-lg shadow-indigo-950/40 flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" /> Activar Modo Diseñador
-              </button>
-              <button
-                id="open-register-modal-btn-2"
-                onClick={() => setShowRegister(true)}
-                className="px-7 py-3.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold rounded-2xl text-sm transition flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" /> Registrar Nueva Cuenta de Diseñador
-              </button>
-            </div>
-          </div>
-          <PublicDesignsGrid />
-        </div>
-      </>
+        {/* Public approved designs showcase */}
+        <PublicDesignsGrid />
+      </div>
     );
   }
 

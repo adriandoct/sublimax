@@ -105,13 +105,8 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
 
           <h3 className="text-xl font-black text-white">Iniciar Sesión con Google</h3>
           <p className="text-xs text-slate-400 mt-1">
-            Autenticación rápida de Google para creadores y diseñadores SUBLIMAX
+            Autenticación rápida de Google para usuarios y clientes de SUBLIMAX
           </p>
-
-          <div className="mt-3 inline-flex items-center gap-1.5 bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 px-3 py-1 rounded-full text-[11px] font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            Acceso Automático con Privilegios de Diseñador
-          </div>
         </div>
 
         {errorMsg && (
@@ -148,7 +143,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                   d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.37 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
                 />
               </svg>
-              <span>Continuar como Diseñador de Google</span>
+              <span>Continuar con Google</span>
             </>
           )}
         </button>

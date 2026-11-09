@@ -217,16 +217,18 @@ export default function App() {
           >
             Corporativo B2B
           </button>
-          <button 
-            onClick={() => { setSelectedProducto(null); setActiveTab('marketplace'); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-              activeTab === 'marketplace' 
-                ? 'bg-indigo-600/25 border border-indigo-500/40 text-indigo-200' 
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Creadores
-          </button>
+          {currentUser?.role === 'admin' && (
+            <button 
+              onClick={() => { setSelectedProducto(null); setActiveTab('marketplace'); }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                activeTab === 'marketplace' 
+                  ? 'bg-indigo-600/25 border border-indigo-500/40 text-indigo-200' 
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Creadores
+            </button>
+          )}
           <button 
             onClick={() => { setSelectedProducto(null); setActiveTab('rewards'); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
@@ -262,9 +264,9 @@ export default function App() {
               <div className="hidden sm:block text-left">
                 <span className="text-[10px] text-slate-300 font-bold block truncate max-w-[100px]">{currentUser.nombre}</span>
                 <span className={`text-[8px] block uppercase font-bold tracking-wider ${
-                  currentUser.role === 'designer' ? 'text-indigo-400' : currentUser.role === 'admin' ? 'text-red-400' : 'text-slate-500'
+                  currentUser.role === 'admin' ? 'text-red-400' : 'text-slate-500'
                 }`}>
-                  {currentUser.role === 'designer' ? '✦ Diseñador Google' : currentUser.role}
+                  {currentUser.role === 'admin' ? '✦ Administrador' : 'Cliente'}
                 </span>
               </div>
               <button 
@@ -602,8 +604,8 @@ export default function App() {
           <B2BPortal products={products} />
         )}
 
-        {/* TAB 4: CREATOR MARKETPLACE */}
-        {activeTab === 'marketplace' && (
+        {/* TAB 4: CREATOR MARKETPLACE (SOLO ADMINISTRADORES) */}
+        {activeTab === 'marketplace' && currentUser?.role === 'admin' && (
           <DesignerMarketplace currentUser={currentUser} onRefreshUser={handleRefreshUser} onAddToCart={handleAddToCart} />
         )}
 
@@ -947,9 +949,6 @@ export default function App() {
         onClose={() => setIsGoogleAuthOpen(false)}
         onSuccess={(user) => {
           setCurrentUser(user);
-          if (user.role === 'designer') {
-            setActiveTab('marketplace');
-          }
         }}
       />
 

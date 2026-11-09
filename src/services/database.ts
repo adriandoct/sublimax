@@ -517,15 +517,13 @@ export class Database {
     const users = this.getUsers();
     let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) {
-      const isDesigner = email.includes('designer');
       user = {
         id: `user-${Date.now()}`,
         email: email,
         nombre: email.split('@')[0].toUpperCase(),
-        role: isDesigner ? 'designer' : 'user',
+        role: 'user',
         fecha_registro: new Date().toISOString().split('T')[0],
-        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        comision_acumulada: isDesigner ? 0 : undefined
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
       };
       users.push(user);
       localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
@@ -567,8 +565,8 @@ export class Database {
    * and granting Designer role privileges to Google accounts.
    */
   static loginWithGoogle(
-    email: string = 'diseñador.google@gmail.com',
-    nombre: string = 'Diseñador Google Pro',
+    email: string = 'cliente.google@gmail.com',
+    nombre: string = 'Usuario Google',
     avatarUrl?: string
   ): Usuario {
     this.initialize();
@@ -580,22 +578,12 @@ export class Database {
         id: `google-user-${Date.now()}`,
         email: email,
         nombre: nombre || email.split('@')[0].toUpperCase(),
-        role: 'designer', // Automatic Designer Privileges for Google Account
+        role: 'user', // Solo administradores tienen rol de creador
         fecha_registro: new Date().toISOString().split('T')[0],
-        avatar_url: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
-        comision_acumulada: 0
+        avatar_url: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`
       };
       users.push(user);
       localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
-    } else if (user.role !== 'admin') {
-      // Elevate or reinforce designer privileges
-      user.role = 'designer';
-      if (user.comision_acumulada === undefined) user.comision_acumulada = 0;
-      const idx = users.findIndex(u => u.id === user!.id);
-      if (idx > -1) {
-        users[idx] = user;
-        localStorage.setItem('sublimax_usuarios', JSON.stringify(users));
-      }
     }
 
     localStorage.setItem('sublimax_active_user', JSON.stringify(user));
@@ -603,14 +591,14 @@ export class Database {
   }
 
   /**
-   * Register a brand new user (designer or user role).
+   * Register a brand new user.
    * Returns the created Usuario on success, or an error string on failure.
    */
   static register(
     nombre: string,
     email: string,
     _password: string,
-    role: 'user' | 'designer' = 'user'
+    _role: 'user' | 'designer' = 'user'
   ): Usuario | string {
     this.initialize();
     const users = this.getUsers();
@@ -623,10 +611,9 @@ export class Database {
       id: `user-${Date.now()}`,
       email,
       nombre: nombre.trim() || email.split('@')[0].toUpperCase(),
-      role,
+      role: 'user', // Solo administradores tienen rol de creador
       fecha_registro: new Date().toISOString().split('T')[0],
-      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
-      comision_acumulada: role === 'designer' ? 0 : undefined,
+      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`
     };
 
     users.push(newUser);
